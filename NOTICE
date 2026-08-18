@@ -1,0 +1,30 @@
+SDeVPro Security Platform
+Copyright 2026 SDeVPro
+
+This product is a derivative work based on "Strix"
+(https://github.com/usestrix/strix), Copyright 2025 OmniSecure Inc.,
+licensed under the Apache License, Version 2.0. A copy of that license
+is included in the LICENSE file of this distribution.
+
+Per Apache License 2.0 Section 4, this NOTICE documents that this file
+has been modified from the original source. Summary of modifications
+made by SDeVPro to the original Strix codebase:
+
+  - Product identity, CLI branding, documentation, and default assets
+    (including logo) rebranded from "Strix" to "SDeVPro".
+  - Outbound product telemetry/analytics (PostHog and Scarf event
+    reporting in strix/telemetry/) permanently disabled and stripped of
+    their endpoints and API keys, so no scan or usage data is sent to
+    any third-party analytics service.
+  - Added a new, independent scanning/reporting engine (the `sdevpro`
+    package) that runs security assessments natively without a Docker
+    runtime, intended for local/on-premise deployment.
+  - Added a Telegram bot interface (`sdevpro.telegram_bot`) for
+    submitting scan targets, receiving real-time findings, scheduled
+    recurring reports, and server-log attack-source analysis.
+  - The original `strix/` engine (multi-agent AI pentesting core) is
+    kept for reference/advanced use and is otherwise functionally
+    unmodified beyond the branding and telemetry changes noted above.
+
+This NOTICE file does not modify the license terms. The Apache License,
+Version 2.0 governs use, reproduction, and distribution of this work.
