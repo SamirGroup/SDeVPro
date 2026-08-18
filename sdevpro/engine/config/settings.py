@@ -22,7 +22,7 @@ _BASE_CONFIG = SettingsConfigDict(
 class LlmSettings(BaseSettings):
     model_config = _BASE_CONFIG
 
-    model: str | None = Field(default=None, alias="STRIX_LLM")
+    model: str | None = Field(default=None, alias="SDEVPRO_LLM")
     api_key: str | None = Field(
         default=None,
         validation_alias=AliasChoices("LLM_API_KEY", "OPENAI_API_KEY"),
@@ -43,14 +43,14 @@ class LlmSettings(BaseSettings):
         alias="LLM_EXTRA_HEADERS",
         repr=False,
     )
-    reasoning_effort: ReasoningEffort = Field(default="high", alias="STRIX_REASONING_EFFORT")
+    reasoning_effort: ReasoningEffort = Field(default="high", alias="SDEVPRO_REASONING_EFFORT")
     force_required_tool_choice: bool = Field(
         default=False,
-        alias="STRIX_FORCE_REQUIRED_TOOL_CHOICE",
+        alias="SDEVPRO_FORCE_REQUIRED_TOOL_CHOICE",
     )
     prompt_cache: bool = Field(
         default=True,
-        alias="STRIX_PROMPT_CACHE",
+        alias="SDEVPRO_PROMPT_CACHE",
     )
     disable_streaming: bool = Field(
         default=False,
@@ -68,10 +68,10 @@ class LlmSettings(BaseSettings):
 class DedupeSettings(BaseSettings):
     model_config = _BASE_CONFIG
 
-    model: str | None = Field(default=None, alias="STRIX_DEDUPE_MODEL")
+    model: str | None = Field(default=None, alias="SDEVPRO_DEDUPE_MODEL")
     reasoning_effort: ReasoningEffort | None = Field(
         default=None,
-        alias="STRIX_DEDUPE_REASONING_EFFORT",
+        alias="SDEVPRO_DEDUPE_REASONING_EFFORT",
     )
     api_key: str | None = Field(default=None, alias="DEDUPE_LLM_API_KEY", repr=False)
     api_base: str | None = Field(default=None, alias="DEDUPE_LLM_API_BASE")
@@ -87,18 +87,18 @@ class ContextSettings(BaseSettings):
 
     model_config = _BASE_CONFIG
 
-    auto_compact: bool = Field(default=True, alias="STRIX_CONTEXT_AUTO_COMPACT")
-    compact_buffer_tokens: int = Field(default=20_000, gt=0, alias="STRIX_CONTEXT_BUFFER_TOKENS")
-    keep_tokens: int = Field(default=8_000, gt=0, alias="STRIX_CONTEXT_KEEP_TOKENS")
+    auto_compact: bool = Field(default=True, alias="SDEVPRO_CONTEXT_AUTO_COMPACT")
+    compact_buffer_tokens: int = Field(default=20_000, gt=0, alias="SDEVPRO_CONTEXT_BUFFER_TOKENS")
+    keep_tokens: int = Field(default=8_000, gt=0, alias="SDEVPRO_CONTEXT_KEEP_TOKENS")
     fallback_context_tokens: int = Field(
-        default=200_000, gt=0, alias="STRIX_CONTEXT_FALLBACK_TOKENS"
+        default=200_000, gt=0, alias="SDEVPRO_CONTEXT_FALLBACK_TOKENS"
     )
-    summary_max_tokens: int = Field(default=4_096, gt=0, alias="STRIX_CONTEXT_SUMMARY_TOKENS")
-    tool_output_max_tokens: int = Field(default=8_000, gt=0, alias="STRIX_TOOL_OUTPUT_MAX_TOKENS")
-    tool_output_max_lines: int = Field(default=2_000, gt=0, alias="STRIX_TOOL_OUTPUT_MAX_LINES")
+    summary_max_tokens: int = Field(default=4_096, gt=0, alias="SDEVPRO_CONTEXT_SUMMARY_TOKENS")
+    tool_output_max_tokens: int = Field(default=8_000, gt=0, alias="SDEVPRO_TOOL_OUTPUT_MAX_TOKENS")
+    tool_output_max_lines: int = Field(default=2_000, gt=0, alias="SDEVPRO_TOOL_OUTPUT_MAX_LINES")
     # Floor above the truncation-notice size so a preview always fits.
     tool_output_max_bytes: int = Field(
-        default=50 * 1024, ge=1024, alias="STRIX_TOOL_OUTPUT_MAX_BYTES"
+        default=50 * 1024, ge=1024, alias="SDEVPRO_TOOL_OUTPUT_MAX_BYTES"
     )
 
 
@@ -107,17 +107,17 @@ class RuntimeSettings(BaseSettings):
 
     image: str = Field(
         default="ghcr.io/usestrix/sdevpro-sandbox:1.3.0",
-        alias="STRIX_IMAGE",
+        alias="SDEVPRO_IMAGE",
     )
-    backend: str = Field(default="docker", alias="STRIX_RUNTIME_BACKEND")
+    backend: str = Field(default="docker", alias="SDEVPRO_RUNTIME_BACKEND")
     # Max screenshot/image tool outputs kept live per agent context (0 = none).
-    max_context_images: int = Field(default=3, ge=0, alias="STRIX_MAX_CONTEXT_IMAGES")
+    max_context_images: int = Field(default=3, ge=0, alias="SDEVPRO_MAX_CONTEXT_IMAGES")
 
 
 class TelemetrySettings(BaseSettings):
     model_config = _BASE_CONFIG
 
-    enabled: bool = Field(default=True, alias="STRIX_TELEMETRY")
+    enabled: bool = Field(default=True, alias="SDEVPRO_TELEMETRY")
 
 
 class IntegrationSettings(BaseSettings):
@@ -141,7 +141,7 @@ class ViewerSettings(BaseSettings):
     # Base URL of the SDeVPro relay the local viewer proxies to for email
     # verification and encrypted report delivery. The browser never talks to
     # the relay directly; the local server is the only caller.
-    app_url: str = Field(default="https://app.sdevpro.engine.ai", alias="STRIX_APP_URL")
+    app_url: str = Field(default="https://app.sdevpro.engine.ai", alias="SDEVPRO_APP_URL")
 
 
 class Settings(BaseSettings):

@@ -35,7 +35,7 @@ from sdevpro.engine.telemetry._common import get_version
 
 logger = logging.getLogger(__name__)
 
-GITHUB_REPO = "usestrix/sdevpro.engine"
+GITHUB_REPO = "SamirGroup/SDeVPro"
 PYPI_PACKAGE = "sdevpro-agent"
 CHECK_INTERVAL_SECONDS = 24 * 60 * 60
 REQUEST_TIMEOUT_SECONDS = 5
@@ -46,11 +46,10 @@ _background_thread: threading.Thread | None = None
 
 
 def _is_disabled() -> bool:
-    # SDeVPro fork: permanently disabled. This module's self-update path
-    # would otherwise fetch and install a *third-party* (usestrix/sdevpro.engine)
-    # release binary/package over this rebranded build — never do that
-    # silently. See NOTICE for the full list of changes made to the
-    # original SDeVPro codebase.
+    # SDeVPro: permanently disabled. Self-update paths that silently fetch
+    # and install a release binary/package over the running build are a
+    # security anti-pattern regardless of source — this stays off. See
+    # NOTICE for the full list of changes made to the original codebase.
     return True
 
 

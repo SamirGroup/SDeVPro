@@ -51,7 +51,7 @@ from requests.exceptions import RequestException
 logger = logging.getLogger(__name__)
 
 
-_SANDBOX_NETWORK_ENV = "STRIX_DOCKER_SANDBOX_NETWORK"
+_SANDBOX_NETWORK_ENV = "SDEVPRO_DOCKER_SANDBOX_NETWORK"
 
 
 def _sandbox_network() -> str | None:
@@ -69,22 +69,22 @@ def _apply_sandbox_network(create_kwargs: dict[str, Any]) -> None:
 def _apply_resource_limits(create_kwargs: dict[str, Any]) -> None:
     """Apply optional cgroup resource caps from the environment. Unset/blank
     values leave docker's default (unbounded), so this is opt-in per host."""
-    mem_limit = os.environ.get("STRIX_SANDBOX_MEM_LIMIT", "").strip()
+    mem_limit = os.environ.get("SDEVPRO_SANDBOX_MEM_LIMIT", "").strip()
     if mem_limit:
         create_kwargs["mem_limit"] = mem_limit
 
-    shm_size = os.environ.get("STRIX_SANDBOX_SHM_SIZE", "").strip()
+    shm_size = os.environ.get("SDEVPRO_SANDBOX_SHM_SIZE", "").strip()
     if shm_size:
         create_kwargs["shm_size"] = shm_size
 
-    cpus = os.environ.get("STRIX_SANDBOX_CPUS", "").strip()
+    cpus = os.environ.get("SDEVPRO_SANDBOX_CPUS", "").strip()
     if cpus:
         with contextlib.suppress(ValueError, OverflowError):
             nano_cpus = int(float(cpus) * 1_000_000_000)
             if 0 < nano_cpus <= 2**63 - 1:
                 create_kwargs["nano_cpus"] = nano_cpus
 
-    pids_limit = os.environ.get("STRIX_SANDBOX_PIDS_LIMIT", "").strip()
+    pids_limit = os.environ.get("SDEVPRO_SANDBOX_PIDS_LIMIT", "").strip()
     if pids_limit:
         with contextlib.suppress(ValueError):
             create_kwargs["pids_limit"] = int(pids_limit)
@@ -98,12 +98,12 @@ def _apply_log_limits(create_kwargs: dict[str, Any]) -> None:
     Unlike the cgroup caps above, this defaults **on** — docker's own default
     is an unbounded json-file, which is unsafe for an autonomous agent that
     executes arbitrary commands. ``max-file`` rotation means the on-disk cap is
-    ``max-size * max-file``. Set ``STRIX_SANDBOX_LOG_MAX_SIZE`` to ``0``/``off``
+    ``max-size * max-file``. Set ``SDEVPRO_SANDBOX_LOG_MAX_SIZE`` to ``0``/``off``
     to opt back out to docker's default."""
-    max_size = os.environ.get("STRIX_SANDBOX_LOG_MAX_SIZE", "50m").strip()
+    max_size = os.environ.get("SDEVPRO_SANDBOX_LOG_MAX_SIZE", "50m").strip()
     if max_size.lower() in ("0", "off", "none", "unlimited"):
         return
-    max_file = os.environ.get("STRIX_SANDBOX_LOG_MAX_FILE", "3").strip() or "3"
+    max_file = os.environ.get("SDEVPRO_SANDBOX_LOG_MAX_FILE", "3").strip() or "3"
     create_kwargs["log_config"] = LogConfig(
         type=LogConfig.types.JSON,
         config={"max-size": max_size, "max-file": max_file},
@@ -111,14 +111,14 @@ def _apply_log_limits(create_kwargs: dict[str, Any]) -> None:
 
 
 def _apply_run_labels(create_kwargs: dict[str, Any]) -> None:
-    run_id = os.getenv("STRIX_RUN_ID")
+    run_id = os.getenv("SDEVPRO_RUN_ID")
     if not run_id:
         return
     labels = create_kwargs.setdefault("labels", {})
     if not isinstance(labels, dict):
         return
     labels["sdevpro-run-id"] = run_id
-    run_type = os.getenv("STRIX_RUN_TYPE")
+    run_type = os.getenv("SDEVPRO_RUN_TYPE")
     if run_type:
         labels["sdevpro-run-type"] = run_type
 

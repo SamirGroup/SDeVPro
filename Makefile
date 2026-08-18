@@ -86,7 +86,7 @@ dev: format lint type-check
 
 tui-build:
 	mkdir -p build/sidecar
-	cd sdevpro/engine/interface/tui && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o ../../../$(TUI_BINARY) ./cmd/sdevpro-tui
+	cd sdevpro/engine/interface/tui && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o ../../../../$(TUI_BINARY) ./cmd/sdevpro-tui
 
 tui-test:
 	cd sdevpro/engine/interface/tui && go test -race ./...

@@ -347,7 +347,7 @@ class GoTuiRuntime:
         process: asyncio.subprocess.Process | subprocess.Popen[bytes] | None = None
         try:
             env = child_environment()
-            env["STRIX_VERSION"] = package_version()
+            env["SDEVPRO_VERSION"] = package_version()
             command = self.binary_command()
             cwd = str(tui_source_dir()) if command[:2] == ["go", "run"] else None
             if cwd is not None:

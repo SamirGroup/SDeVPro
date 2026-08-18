@@ -47,7 +47,7 @@ _DATEFMT = "%Y-%m-%d %H:%M:%S"
 
 
 # Third-party loggers that get noisy at DEBUG. Capped so the file isn't
-# drowned in their internals when STRIX_DEBUG=1.
+# drowned in their internals when SDEVPRO_DEBUG=1.
 _NOISY_LIBS: tuple[str, ...] = (
     "httpx",
     "httpcore",
@@ -124,7 +124,7 @@ def setup_scan_logging(run_dir: Path, *, debug: bool | None = None) -> Callable[
             created if missing and opened append-mode (so re-runs of the
             same scan_id concatenate cleanly).
         debug: When ``True``, stderr handler runs at DEBUG instead of
-            ERROR. ``None`` (default) reads ``STRIX_DEBUG`` env: ``1`` /
+            ERROR. ``None`` (default) reads ``SDEVPRO_DEBUG`` env: ``1`` /
             ``true`` / ``yes`` / ``on`` enables debug.
 
     Returns:
@@ -135,7 +135,7 @@ def setup_scan_logging(run_dir: Path, *, debug: bool | None = None) -> Callable[
     configure_dependency_logging()
 
     if debug is None:
-        debug = (os.environ.get("STRIX_DEBUG") or "").strip().lower() in {
+        debug = (os.environ.get("SDEVPRO_DEBUG") or "").strip().lower() in {
             "1",
             "true",
             "yes",

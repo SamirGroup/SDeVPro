@@ -143,7 +143,7 @@ class CodexContentGuardrailError(Exception):
         super().__init__(
             f"'{model}' was blocked by ChatGPT's content guardrails "
             f"(flagged as a possible cybersecurity risk). "
-            f"Set STRIX_LLM to a model that isn't blocked and re-run."
+            f"Set SDEVPRO_LLM to a model that isn't blocked and re-run."
         )
 
 
@@ -392,7 +392,7 @@ SUBSCRIPTION_PREFIX = "chatgpt/"
 
 
 def subscription_model(model_name: str | None) -> str | None:
-    """The model slug behind a ``chatgpt/<model>`` STRIX_LLM, or None."""
+    """The model slug behind a ``chatgpt/<model>`` SDEVPRO_LLM, or None."""
     name = (model_name or "").strip()
     if not name.lower().startswith(SUBSCRIPTION_PREFIX):
         return None

@@ -5,7 +5,7 @@ from pathlib import Path
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 project_root = Path(SPECPATH)
-strix_root = project_root / 'sdevpro'
+engine_root = project_root / 'sdevpro' / 'engine'
 
 tui_name = 'sdevpro-tui.exe' if sys.platform == 'win32' else 'sdevpro-tui'
 tui_binary = project_root / 'build' / 'sidecar' / tui_name
@@ -17,20 +17,20 @@ binaries = [(str(tui_binary), 'sdevpro/engine/bin')]
 
 datas = []
 
-for md_file in strix_root.rglob('skills/**/*.md'):
+for md_file in engine_root.rglob('skills/**/*.md'):
     rel_path = md_file.relative_to(project_root)
     datas.append((str(md_file), str(rel_path.parent)))
 
-for jinja_file in strix_root.rglob('agents/**/*.jinja'):
+for jinja_file in engine_root.rglob('agents/**/*.jinja'):
     rel_path = jinja_file.relative_to(project_root)
     datas.append((str(jinja_file), str(rel_path.parent)))
 
-for xml_file in strix_root.rglob('*.xml'):
+for xml_file in engine_root.rglob('*.xml'):
     rel_path = xml_file.relative_to(project_root)
     datas.append((str(xml_file), str(rel_path.parent)))
 
 # Prebuilt local-viewer SPA (served by `sdevpro view`).
-viewer_static = strix_root / 'interface' / 'viewer' / 'static'
+viewer_static = engine_root / 'interface' / 'viewer' / 'static'
 for asset in viewer_static.rglob('*'):
     if asset.is_file():
         rel_path = asset.relative_to(project_root)
@@ -112,42 +112,42 @@ hiddenimports = [
 
     # SDeVPro modules
     'sdevpro',
-    'sdevpro.interface',
-    'sdevpro.interface.main',
-    'sdevpro.interface.cli',
-    'sdevpro.interface.tui',
-    'sdevpro.interface.tui.runtime',
-    'sdevpro.interface.tui.history',
-    'sdevpro.interface.tui.live_view',
-    'sdevpro.interface.tui.backend',
-    'sdevpro.interface.tui.backend.controller',
-    'sdevpro.interface.tui.backend.messages',
-    'sdevpro.interface.tui.backend.protocol',
-    'sdevpro.interface.tui.backend.server',
-    'sdevpro.interface.utils',
-    'sdevpro.agents',
-    'sdevpro.agents.factory',
-    'sdevpro.agents.prompt',
-    'sdevpro.config.loader',
-    'sdevpro.config.settings',
-    'sdevpro.config.codex',
-    'sdevpro.core',
-    'sdevpro.core.agents',
-    'sdevpro.core.execution',
-    'sdevpro.core.inputs',
-    'sdevpro.core.paths',
-    'sdevpro.core.runner',
-    'sdevpro.core.sessions',
-    'sdevpro.report',
-    'sdevpro.report.dedupe',
-    'sdevpro.report.state',
-    'sdevpro.report.writer',
-    'sdevpro.interface.viewer',
-    'sdevpro.interface.viewer.auth',
-    'sdevpro.interface.viewer.cli',
-    'sdevpro.interface.viewer.report_pdf',
-    'sdevpro.interface.viewer.server',
-    'sdevpro.interface.viewer.transcript',
+    'sdevpro.engine.interface',
+    'sdevpro.engine.interface.main',
+    'sdevpro.engine.interface.cli',
+    'sdevpro.engine.interface.tui',
+    'sdevpro.engine.interface.tui.runtime',
+    'sdevpro.engine.interface.tui.history',
+    'sdevpro.engine.interface.tui.live_view',
+    'sdevpro.engine.interface.tui.backend',
+    'sdevpro.engine.interface.tui.backend.controller',
+    'sdevpro.engine.interface.tui.backend.messages',
+    'sdevpro.engine.interface.tui.backend.protocol',
+    'sdevpro.engine.interface.tui.backend.server',
+    'sdevpro.engine.interface.utils',
+    'sdevpro.engine.agents',
+    'sdevpro.engine.agents.factory',
+    'sdevpro.engine.agents.prompt',
+    'sdevpro.engine.config.loader',
+    'sdevpro.engine.config.settings',
+    'sdevpro.engine.config.codex',
+    'sdevpro.engine.core',
+    'sdevpro.engine.core.agents',
+    'sdevpro.engine.core.execution',
+    'sdevpro.engine.core.inputs',
+    'sdevpro.engine.core.paths',
+    'sdevpro.engine.core.runner',
+    'sdevpro.engine.core.sessions',
+    'sdevpro.engine.report',
+    'sdevpro.engine.report.dedupe',
+    'sdevpro.engine.report.state',
+    'sdevpro.engine.report.writer',
+    'sdevpro.engine.interface.viewer',
+    'sdevpro.engine.interface.viewer.auth',
+    'sdevpro.engine.interface.viewer.cli',
+    'sdevpro.engine.interface.viewer.report_pdf',
+    'sdevpro.engine.interface.viewer.server',
+    'sdevpro.engine.interface.viewer.transcript',
 
     # PDF report generation + encryption
     'reportlab',
@@ -157,26 +157,26 @@ hiddenimports = [
     'reportlab.platypus',
     'pypdf',
     'cryptography',
-    'sdevpro.runtime',
-    'sdevpro.runtime.backends',
-    'sdevpro.runtime.caido_bootstrap',
-    'sdevpro.runtime.docker_client',
-    'sdevpro.runtime.session_manager',
-    'sdevpro.telemetry',
-    'sdevpro.telemetry.logging',
-    'sdevpro.telemetry.posthog',
-    'sdevpro.tools',
-    'sdevpro.tools.agents_graph.tools',
-    'sdevpro.tools.finish.tool',
-    'sdevpro.tools.notes.tools',
-    'sdevpro.tools.proxy._calls',
-    'sdevpro.tools.proxy.tools',
-    'sdevpro.tools.python.tool',
-    'sdevpro.tools.reporting.tool',
-    'sdevpro.tools.thinking.tool',
-    'sdevpro.tools.todo.tools',
-    'sdevpro.tools.web_search.tool',
-    'sdevpro.skills',
+    'sdevpro.engine.runtime',
+    'sdevpro.engine.runtime.backends',
+    'sdevpro.engine.runtime.caido_bootstrap',
+    'sdevpro.engine.runtime.docker_client',
+    'sdevpro.engine.runtime.session_manager',
+    'sdevpro.engine.telemetry',
+    'sdevpro.engine.telemetry.logging',
+    'sdevpro.engine.telemetry.posthog',
+    'sdevpro.engine.tools',
+    'sdevpro.engine.tools.agents_graph.tools',
+    'sdevpro.engine.tools.finish.tool',
+    'sdevpro.engine.tools.notes.tools',
+    'sdevpro.engine.tools.proxy._calls',
+    'sdevpro.engine.tools.proxy.tools',
+    'sdevpro.engine.tools.python.tool',
+    'sdevpro.engine.tools.reporting.tool',
+    'sdevpro.engine.tools.thinking.tool',
+    'sdevpro.engine.tools.todo.tools',
+    'sdevpro.engine.tools.web_search.tool',
+    'sdevpro.engine.skills',
 ]
 
 hiddenimports += collect_submodules('litellm')

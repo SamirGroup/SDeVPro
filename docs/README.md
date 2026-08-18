@@ -1,6 +1,6 @@
-# Strix Documentation
+# SDeVPro Documentation
 
-Documentation source files for Strix, powered by [Mintlify](https://mintlify.com).
+Documentation source files for SDeVPro, powered by [Mintlify](https://mintlify.com).
 
 ## Local Preview
 

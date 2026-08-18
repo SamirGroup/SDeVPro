@@ -24,9 +24,9 @@ _SENSITIVE_ENV_NAMES = {
     "AWS_ACCESS_KEY_ID",
     "GOOGLE_APPLICATION_CREDENTIALS",
     "LLM_API_KEY",
-    "STRIX_TUI_ADDR",
-    "STRIX_TUI_FD",
-    "STRIX_TUI_TOKEN",
+    "SDEVPRO_TUI_ADDR",
+    "SDEVPRO_TUI_FD",
+    "SDEVPRO_TUI_TOKEN",
 }
 
 
@@ -139,7 +139,7 @@ async def _launch_posix_tui_process(
 ) -> tuple[asyncio.subprocess.Process, socket.socket]:
     backend_socket, child_socket = socket.socketpair()
     try:
-        env["STRIX_TUI_FD"] = str(child_socket.fileno())
+        env["SDEVPRO_TUI_FD"] = str(child_socket.fileno())
         process = await asyncio.create_subprocess_exec(
             *command, env=env, cwd=cwd, pass_fds=(child_socket.fileno(),)
         )
@@ -165,7 +165,7 @@ async def _launch_windows_tui_process(
         listener.listen(1)
         token = secrets.token_hex(32)
         host, port = listener.getsockname()[:2]
-        env.update({"STRIX_TUI_ADDR": f"{host}:{port}", "STRIX_TUI_TOKEN": token})
+        env.update({"SDEVPRO_TUI_ADDR": f"{host}:{port}", "SDEVPRO_TUI_TOKEN": token})
         windows_process = subprocess.Popen(command, env=env, cwd=cwd)  # noqa: S603
         connection = await asyncio.to_thread(_accept_authenticated_connection, listener, token)
     except BaseException:

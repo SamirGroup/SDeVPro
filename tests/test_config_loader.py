@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 
 _LLM_ENV_KEYS = [
-    "STRIX_LLM",
+    "SDEVPRO_LLM",
     "LLM_API_KEY",
     "OPENAI_API_KEY",
     "LLM_API_BASE",
@@ -26,15 +26,15 @@ _LLM_ENV_KEYS = [
     "OPENAI_BASE_URL",
     "LITELLM_BASE_URL",
     "OLLAMA_API_BASE",
-    "STRIX_REASONING_EFFORT",
-    "STRIX_FORCE_REQUIRED_TOOL_CHOICE",
+    "SDEVPRO_REASONING_EFFORT",
+    "SDEVPRO_FORCE_REQUIRED_TOOL_CHOICE",
     "LLM_TIMEOUT",
     "PERPLEXITY_API_KEY",
     # RuntimeSettings
-    "STRIX_IMAGE",
-    "STRIX_RUNTIME_BACKEND",
+    "SDEVPRO_IMAGE",
+    "SDEVPRO_RUNTIME_BACKEND",
     # TelemetrySettings
-    "STRIX_TELEMETRY",
+    "SDEVPRO_TELEMETRY",
 ]
 
 
@@ -71,7 +71,7 @@ def test_read_json_overrides_non_dict_env(tmp_path: Path) -> None:
 def test_read_json_overrides_maps_to_nested_settings(tmp_path: Path) -> None:
     path = tmp_path / "cli-config.json"
     path.write_text(
-        json.dumps({"env": {"STRIX_LLM": "my-model", "PERPLEXITY_API_KEY": "pk"}}),
+        json.dumps({"env": {"SDEVPRO_LLM": "my-model", "PERPLEXITY_API_KEY": "pk"}}),
         encoding="utf-8",
     )
     assert loader._read_json_overrides(path) == {
@@ -83,9 +83,9 @@ def test_read_json_overrides_maps_to_nested_settings(tmp_path: Path) -> None:
 def test_read_json_overrides_skips_keys_already_in_environ(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setenv("STRIX_LLM", "from-env")
+    monkeypatch.setenv("SDEVPRO_LLM", "from-env")
     path = tmp_path / "cli-config.json"
-    path.write_text(json.dumps({"env": {"STRIX_LLM": "from-file"}}), encoding="utf-8")
+    path.write_text(json.dumps({"env": {"SDEVPRO_LLM": "from-file"}}), encoding="utf-8")
     # env wins -> the JSON value is not surfaced as an init kwarg.
     assert loader._read_json_overrides(path) == {}
 
@@ -108,7 +108,7 @@ def test_read_json_overrides_env_wins_case_insensitively(
     # Settings use case_sensitive=False, so a lowercase env var also counts as set.
     monkeypatch.setenv("strix_llm", "from-env")
     path = tmp_path / "cli-config.json"
-    path.write_text(json.dumps({"env": {"STRIX_LLM": "from-file"}}), encoding="utf-8")
+    path.write_text(json.dumps({"env": {"SDEVPRO_LLM": "from-file"}}), encoding="utf-8")
     assert loader._read_json_overrides(path) == {}
 
 
@@ -122,11 +122,11 @@ def test_read_json_overrides_uses_json_when_no_alias_in_environ(tmp_path: Path) 
 
 def test_tool_output_max_bytes_rejects_sub_notice_values() -> None:
     with pytest.raises(ValidationError):
-        ContextSettings(STRIX_TOOL_OUTPUT_MAX_BYTES=64)
+        ContextSettings(SDEVPRO_TOOL_OUTPUT_MAX_BYTES=64)
 
 
 def test_tool_output_max_bytes_accepts_floor() -> None:
-    assert ContextSettings(STRIX_TOOL_OUTPUT_MAX_BYTES=1024).tool_output_max_bytes == 1024
+    assert ContextSettings(SDEVPRO_TOOL_OUTPUT_MAX_BYTES=1024).tool_output_max_bytes == 1024
 
 
 # --------------------------------------------------------------------------- #
@@ -164,7 +164,7 @@ def test_aliases_for_no_alias() -> None:
 def test_apply_override_and_load_settings_round_trip(tmp_path: Path) -> None:
     path = tmp_path / "cli-config.json"
     path.write_text(
-        json.dumps({"env": {"STRIX_LLM": "round-trip-model", "PERPLEXITY_API_KEY": "pk"}}),
+        json.dumps({"env": {"SDEVPRO_LLM": "round-trip-model", "PERPLEXITY_API_KEY": "pk"}}),
         encoding="utf-8",
     )
 
@@ -179,9 +179,9 @@ def test_apply_override_and_load_settings_round_trip(tmp_path: Path) -> None:
 
 def test_apply_config_override_invalidates_cache(tmp_path: Path) -> None:
     first = tmp_path / "first.json"
-    first.write_text(json.dumps({"env": {"STRIX_LLM": "first-model"}}), encoding="utf-8")
+    first.write_text(json.dumps({"env": {"SDEVPRO_LLM": "first-model"}}), encoding="utf-8")
     second = tmp_path / "second.json"
-    second.write_text(json.dumps({"env": {"STRIX_LLM": "second-model"}}), encoding="utf-8")
+    second.write_text(json.dumps({"env": {"SDEVPRO_LLM": "second-model"}}), encoding="utf-8")
 
     loader.apply_config_override(first)
     assert loader.load_settings().llm.model == "first-model"
@@ -196,7 +196,7 @@ def test_apply_config_override_invalidates_cache(tmp_path: Path) -> None:
 
 
 def test_persist_current_writes_env_block(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("STRIX_LLM", "persisted-model")
+    monkeypatch.setenv("SDEVPRO_LLM", "persisted-model")
     target = tmp_path / "sub" / "cli-config.json"
     loader.apply_config_override(target)
 
@@ -204,12 +204,12 @@ def test_persist_current_writes_env_block(tmp_path: Path, monkeypatch: pytest.Mo
 
     assert target.exists()
     assert json.loads(target.read_text(encoding="utf-8")) == {
-        "env": {"STRIX_LLM": "persisted-model"}
+        "env": {"SDEVPRO_LLM": "persisted-model"}
     }
 
 
 def test_persist_current_sets_0600_mode(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("STRIX_LLM", "persisted-model")
+    monkeypatch.setenv("SDEVPRO_LLM", "persisted-model")
     target = tmp_path / "cli-config.json"
     loader.apply_config_override(target)
 

@@ -45,14 +45,14 @@ class CustomBuildHook(BuildHookInterface[Any]):
                 str(output),
                 "./cmd/sdevpro-tui",
             ],
-            cwd=root / "sdevpro" / "interface" / "tui",
+            cwd=root / "sdevpro" / "engine" / "interface" / "tui",
             env=env,
             check=True,
         )
 
         build_data["force_include"][str(output)] = f"sdevpro/engine/bin/{executable}"
         build_data["pure_python"] = False
-        platform_tag = os.environ.get("STRIX_WHEEL_PLATFORM_TAG")
+        platform_tag = os.environ.get("SDEVPRO_WHEEL_PLATFORM_TAG")
         if not platform_tag:
             platform_tag = sysconfig.get_platform().replace("-", "_").replace(".", "_")
         build_data["tag"] = f"py3-none-{platform_tag}"

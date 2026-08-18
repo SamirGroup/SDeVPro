@@ -123,7 +123,7 @@ def test_content_guardrail_error_message() -> None:
     err = codex.CodexContentGuardrailError("gpt-5.6-sol")
     assert err.model == "gpt-5.6-sol"
     assert "gpt-5.6-sol" in str(err)
-    assert "STRIX_LLM" in str(err)
+    assert "SDEVPRO_LLM" in str(err)
 
 
 def test_account_id_from_jwt() -> None:

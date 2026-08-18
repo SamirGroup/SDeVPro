@@ -15,7 +15,7 @@ from sdevpro.engine.interface import update_check
 def _isolated_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(update_check, "_CACHE_PATH", tmp_path / "update-check.json")
     monkeypatch.setattr(update_check, "_background_thread", None)
-    monkeypatch.delenv("STRIX_NO_UPDATE_CHECK", raising=False)
+    monkeypatch.delenv("SDEVPRO_NO_UPDATE_CHECK", raising=False)
     for key in ("CI", "GITHUB_ACTIONS", "GITLAB_CI", "JENKINS_URL", "BUILDKITE", "CIRCLECI"):
         monkeypatch.delenv(key, raising=False)
 
@@ -58,7 +58,7 @@ def test_get_available_update_disabled_by_env(monkeypatch: pytest.MonkeyPatch) -
         json.dumps({"latest_version": "9.9.9", "checked_at": time.time()})
     )
     monkeypatch.setattr(update_check, "get_version", lambda: "1.0.0")
-    monkeypatch.setenv("STRIX_NO_UPDATE_CHECK", "1")
+    monkeypatch.setenv("SDEVPRO_NO_UPDATE_CHECK", "1")
     assert update_check.get_available_update() is None
 
 

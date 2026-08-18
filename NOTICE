@@ -1,0 +1,48 @@
+SDeVPro Security Platform
+Copyright 2026 SDeVPro
+
+This product is a derivative work based on the open-source "Strix"
+penetration-testing agent (originally published at
+https://github.com/usestrix/strix), Copyright 2025 OmniSecure Inc.,
+licensed under the Apache License, Version 2.0. A copy of that license is
+included in the LICENSE file of this distribution.
+
+Per Apache License 2.0 Section 4, this NOTICE documents that files from the
+original source have been modified. Summary of modifications made by
+SDeVPro:
+
+  - Product identity, CLI branding, documentation, default assets
+    (including logo), directory layout, internal module paths, and build
+    tooling (PyInstaller spec, Go sidecar naming, install/build scripts,
+    CI workflow) rebranded and renamed throughout from "Strix" to
+    "SDeVPro". The original multi-agent engine now lives at
+    `sdevpro/engine/` (import path `sdevpro.engine.*`) as an internal,
+    nested subpackage of the single top-level `sdevpro` package, rather
+    than a separate top-level "strix" package.
+  - Outbound product telemetry/analytics (PostHog and Scarf event
+    reporting) and the automatic self-update / update-notification
+    mechanism permanently disabled and stripped of their endpoints and
+    API keys, so no scan or usage data is sent to any third-party service
+    and the running build can never be silently replaced by a
+    third-party release.
+  - Added a new, independent scanning/reporting engine (the top-level
+    `sdevpro` package: `sdevpro/scanner/`, `sdevpro/ai_analyst.py`,
+    `sdevpro/reporter.py`, `sdevpro/log_analyzer.py`, `sdevpro/github_scan.py`)
+    that runs security assessments natively without a Docker runtime,
+    intended for local/on-premise or serverless deployment.
+  - Added a Telegram bot interface (`sdevpro.telegram_bot`) — Uzbek/
+    Russian/English UI, per-user encrypted AI (LLM) API keys, GitHub
+    repository scanning, scheduled recurring scans, and server-log
+    attack-source analysis, with PDF/TXT report export.
+  - Added a Flask-based webhook adapter (`sdevpro/webhook_app.py`,
+    `api/index.py`, `vercel.json`) for serverless (e.g. Vercel)
+    deployment, with a pluggable storage backend (local JSON files or
+    Upstash Redis).
+  - The nested `sdevpro/engine/` package (the original multi-agent,
+    Docker-sandboxed pentesting core) is kept for reference/advanced use
+    and is otherwise functionally unmodified beyond the renaming,
+    branding, and telemetry/self-update changes noted above — it makes no
+    network connection to any third-party "Strix" service.
+
+This NOTICE file does not modify the license terms. The Apache License,
+Version 2.0 governs use, reproduction, and distribution of this work.

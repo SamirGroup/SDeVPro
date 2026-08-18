@@ -64,7 +64,7 @@ sdevpro = [
 ]
 
 [project.scripts]
-sdevpro = "strix.interface.main:main"
+sdevpro = "sdevpro.engine.interface.main:main"
 sdevpro-bot = "sdevpro.main:cli"
 
 [dependency-groups]
@@ -88,19 +88,19 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["strix", "sdevpro"]
-# The prebuilt viewer bundle under strix/interface/viewer/static/ ships automatically
+packages = ["sdevpro"]
+# The prebuilt viewer bundle under sdevpro/engine/interface/viewer/static/ ships automatically
 # (hatchling includes non-.py files under the package). The Vite SOURCE lives
-# under the package dir too (strix/interface/viewer/frontend/) but must never ship in the wheel.
+# under the package dir too (sdevpro/engine/interface/viewer/frontend/) but must never ship in the wheel.
 exclude = [
-  "strix/interface/viewer/frontend",
-  "strix/interface/viewer/frontend/**",
+  "sdevpro/engine/interface/viewer/frontend",
+  "sdevpro/engine/interface/viewer/frontend/**",
   # Go TUI SOURCE lives under the package dir but must never ship in the wheel;
-  # the compiled sidecar is force-included as strix/bin/strix-tui instead.
-  "strix/interface/tui/cmd/**",
-  "strix/interface/tui/internal/**",
-  "strix/interface/tui/go.mod",
-  "strix/interface/tui/go.sum",
+  # the compiled sidecar is force-included as sdevpro/engine/bin/sdevpro-tui instead.
+  "sdevpro/engine/interface/tui/cmd/**",
+  "sdevpro/engine/interface/tui/internal/**",
+  "sdevpro/engine/interface/tui/go.mod",
+  "sdevpro/engine/interface/tui/go.sum",
 ]
 
 [tool.hatch.build.targets.wheel.hooks.custom]
@@ -242,7 +242,7 @@ ignore = [
 # Hatchling loads the build hook by path, not as an importable package.
 "scripts/tui_sidecar_hook.py" = ["INP001"]
 # Stdlib HTTP handler overrides (do_GET/do_POST).
-"strix/interface/auth_cli.py" = ["N802"]
+"sdevpro/engine/interface/auth_cli.py" = ["N802"]
 "tests/test_codex_streaming.py" = ["N802"]
 "tests/test_disable_streaming.py" = ["N802"]
 "tests/test_tool_call_ids.py" = ["N802"]
@@ -251,23 +251,23 @@ ignore = [
 "tests/test_unknown_tool_recovery.py" = ["N802"]
 "tests/test_report_pdf.py" = ["S105", "S106"]
 # Stdlib HTTP handler overrides (do_GET/do_POST) and lazy imports that avoid a
-# circular dependency with strix.telemetry / strix.interface.viewer.report_pdf.
-"strix/interface/viewer/server.py" = ["N802", "PLC0415"]
+# circular dependency with sdevpro.engine.telemetry / sdevpro.engine.interface.viewer.report_pdf.
+"sdevpro/engine/interface/viewer/server.py" = ["N802", "PLC0415"]
 # Lazy telemetry import to avoid importing PostHog before the viewer starts.
-"strix/interface/viewer/cli.py" = ["PLC0415"]
+"sdevpro/engine/interface/viewer/cli.py" = ["PLC0415"]
 # Lazy imports inside functions to avoid circular dependency with
-# strix.telemetry / strix.report.dedupe / cvss.
-"strix/tools/notes/tools.py" = ["PLC0415", "TC002"]
-"strix/tools/finish/tool.py" = ["PLC0415", "TC002"]
-"strix/tools/reporting/tool.py" = ["PLC0415", "TC002"]
-"strix/tools/**/*.py" = [
+# sdevpro.engine.telemetry / sdevpro.engine.report.dedupe / cvss.
+"sdevpro/engine/tools/notes/tools.py" = ["PLC0415", "TC002"]
+"sdevpro/engine/tools/finish/tool.py" = ["PLC0415", "TC002"]
+"sdevpro/engine/tools/reporting/tool.py" = ["PLC0415", "TC002"]
+"sdevpro/engine/tools/**/*.py" = [
     "ARG001", # Unused function argument (tools may have unused args for interface consistency)
 ]
 # Custom Docker subclass duplicates parent body; some imports are for annotations.
 # Backend factories import their backend's deps lazily so deployments
 # that pick a different backend don't need every backend's libs installed.
-"strix/runtime/backends.py" = ["PLC0415"]
-"strix/runtime/docker_client.py" = [
+"sdevpro/engine/runtime/backends.py" = ["PLC0415"]
+"sdevpro/engine/runtime/docker_client.py" = [
     "TC002",  # Manifest, Container imported for annotations
     "TC003",  # uuid imported for annotation
 ]
@@ -275,48 +275,48 @@ ignore = [
 # time to derive the JSON schema, which evaluates annotations at runtime —
 # so RunContextWrapper / Tool / TResponseInputItem must be imported eagerly,
 # not under TYPE_CHECKING.
-"strix/tools/todo/tools.py" = ["TC002"]
-"strix/tools/thinking/tool.py" = ["TC002"]
-"strix/tools/web_search/tool.py" = ["TC002"]
-"strix/tools/proxy/tools.py" = ["TC002", "PLR0911"]
-"strix/tools/agents_graph/tools.py" = ["TC002"]
-"strix/agents/factory.py" = ["TC002"]
+"sdevpro/engine/tools/todo/tools.py" = ["TC002"]
+"sdevpro/engine/tools/thinking/tool.py" = ["TC002"]
+"sdevpro/engine/tools/web_search/tool.py" = ["TC002"]
+"sdevpro/engine/tools/proxy/tools.py" = ["TC002", "PLR0911"]
+"sdevpro/engine/tools/agents_graph/tools.py" = ["TC002"]
+"sdevpro/engine/agents/factory.py" = ["TC002"]
 # Entry point: ``Path`` is used at runtime by the typing of the
 # session_manager call; importing under TYPE_CHECKING would defer
 # resolution past where mypy needs it.
-"strix/core/runner.py" = ["TC003", "PLR0912", "PLR0915", "PLC0415"]
+"sdevpro/engine/core/runner.py" = ["TC003", "PLR0912", "PLR0915", "PLC0415"]
 # ReportState carries scan artifact/report fields and
 # a runtime ``Callable`` annotation on ``vulnerability_found_callback``.
-"strix/report/state.py" = ["TC003", "PLR0912", "PLR0915", "E501", "PERF401", "PLC0415"]
-"strix/report/usage.py" = ["PLC0415"]
-# Lazy import of strix.config.models avoids a circular dependency between the
+"sdevpro/engine/report/state.py" = ["TC003", "PLR0912", "PLR0915", "E501", "PERF401", "PLC0415"]
+"sdevpro/engine/report/usage.py" = ["PLC0415"]
+# Lazy import of sdevpro.engine.config.models avoids a circular dependency between the
 # report pipeline and the config layer.
-"strix/report/dedupe.py" = ["PLC0415"]
-"strix/telemetry/logging.py" = ["PLC0415"]
-"strix/config/models.py" = ["PLC0415"]
+"sdevpro/engine/report/dedupe.py" = ["PLC0415"]
+"sdevpro/engine/telemetry/logging.py" = ["PLC0415"]
+"sdevpro/engine/config/models.py" = ["PLC0415"]
 # Heavy inference deps (httpx, openai) imported lazily so auth-status checks
 # don't pull them in.
-"strix/config/codex.py" = ["PLC0415"]
+"sdevpro/engine/config/codex.py" = ["PLC0415"]
 # Interface utility branches per scope-mode / target-type combination;
 # splitting would obscure the decision tree without simplifying it.
-"strix/interface/utils.py" = ["PLR0912", "BLE001", "PLC0415"]
+"sdevpro/engine/interface/utils.py" = ["PLR0912", "BLE001", "PLC0415"]
 # CLI / TUI / main keep extensive lazy imports + broad exception
 # swallows for resilience around terminal-rendering errors.
-"strix/interface/cli.py" = ["BLE001", "PLC0415"]
-"strix/interface/scan_setup.py" = ["PLC0415"]
-"strix/interface/main.py" = ["BLE001", "PLC0415", "PLR0912", "PLR0915"]
-"strix/interface/cli_args.py" = ["BLE001", "PLC0415", "PLR0912", "PLR0915"]
-"strix/interface/environment.py" = ["BLE001", "PLC0415", "PLR0912", "PLR0915"]
+"sdevpro/engine/interface/cli.py" = ["BLE001", "PLC0415"]
+"sdevpro/engine/interface/scan_setup.py" = ["PLC0415"]
+"sdevpro/engine/interface/main.py" = ["BLE001", "PLC0415", "PLR0912", "PLR0915"]
+"sdevpro/engine/interface/cli_args.py" = ["BLE001", "PLC0415", "PLR0912", "PLR0915"]
+"sdevpro/engine/interface/environment.py" = ["BLE001", "PLC0415", "PLR0912", "PLR0915"]
 # The Go TUI runtime and backend controller import interface modules lazily so
 # the sidecar entry point stays fast and avoids circular imports.
-"strix/interface/interactive.py" = ["PLC0415"]
-"strix/interface/tui/runtime.py" = ["PLC0415"]
-"strix/interface/tui/backend/controller.py" = ["PLC0415"]
+"sdevpro/engine/interface/interactive.py" = ["PLC0415"]
+"sdevpro/engine/interface/tui/runtime.py" = ["PLC0415"]
+"sdevpro/engine/interface/tui/backend/controller.py" = ["PLC0415"]
 
 [tool.ruff.lint.isort]
 force-single-line = false
 lines-after-imports = 2
-known-first-party = ["strix"]
+known-first-party = ["sdevpro"]
 known-third-party = ["pydantic"]
 
 [tool.ruff.lint.pylint]
@@ -333,7 +333,7 @@ line-ending = "auto"
 # ============================================================================
 
 [tool.pyright]
-include = ["strix"]
+include = ["sdevpro"]
 exclude = ["**/__pycache__", "build", "dist"]
 pythonVersion = "3.12"
 pythonPlatform = "Linux"
@@ -392,7 +392,7 @@ include_trailing_comma = true
 force_grid_wrap = 0
 use_parentheses = true
 ensure_newline_before_comments = true
-known_first_party = ["strix"]
+known_first_party = ["sdevpro"]
 known_third_party = ["pydantic", "litellm"]
 
 # ============================================================================

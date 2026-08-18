@@ -216,7 +216,7 @@ Examples:
     parser.add_argument(
         "--config",
         type=str,
-        help="Path to a custom config file (JSON) to use instead of ~/.sdevpro/engine/cli-config.json",
+        help="Path to a custom config file (JSON) to use instead of ~/.sdevpro/cli-config.json",
     )
 
     parser.add_argument(
@@ -249,7 +249,7 @@ Examples:
         type=str,
         metavar="RUN_NAME",
         help=(
-            "Resume a prior scan by its run name (the dir under ./strix_runs/). "
+            "Resume a prior scan by its run name (the dir under ./sdevpro_runs/). "
             "Picks up the root + every non-terminal subagent's full LLM history "
             "and agent topology. Skips fresh run-name generation."
         ),

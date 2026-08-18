@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
 
-_ENV_KEYS = ["STRIX_LLM", "LLM_API_KEY", "LLM_API_BASE", "LLM_EXTRA_HEADERS"]
+_ENV_KEYS = ["SDEVPRO_LLM", "LLM_API_KEY", "LLM_API_BASE", "LLM_EXTRA_HEADERS"]
 
 
 @pytest.fixture(autouse=True)
@@ -45,7 +45,7 @@ def test_extra_headers_parsed_from_json_env(monkeypatch: pytest.MonkeyPatch) -> 
 
 
 def test_extra_headers_merged_into_litellm_headers(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("STRIX_LLM", "litellm/openai/some-model")
+    monkeypatch.setenv("SDEVPRO_LLM", "litellm/openai/some-model")
     monkeypatch.setenv("LLM_API_BASE", "https://gateway.example/v1")
     monkeypatch.setenv("LLM_API_KEY", "token")
     headers = {"X-Feature-Key": "svc", "X-Tenant": "acme"}
@@ -60,7 +60,7 @@ def test_extra_headers_merged_into_litellm_headers(monkeypatch: pytest.MonkeyPat
 
 
 def test_extra_headers_applied_to_native_openai_client(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("STRIX_LLM", "openai/some-model")
+    monkeypatch.setenv("SDEVPRO_LLM", "openai/some-model")
     monkeypatch.setenv("LLM_API_BASE", "https://gateway.example/v1")
     monkeypatch.setenv("LLM_API_KEY", "token")
     monkeypatch.setenv("LLM_EXTRA_HEADERS", json.dumps({"X-Feature-Key": "svc"}))
@@ -76,7 +76,7 @@ def test_extra_headers_applied_to_native_openai_client(monkeypatch: pytest.Monke
 def test_extra_headers_applied_to_native_openai_without_custom_base(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("STRIX_LLM", "openai/gpt-5")
+    monkeypatch.setenv("SDEVPRO_LLM", "openai/gpt-5")
     monkeypatch.setenv("LLM_API_KEY", "token")
     monkeypatch.setenv("LLM_EXTRA_HEADERS", json.dumps({"X-Feature-Key": "svc"}))
 
@@ -88,7 +88,7 @@ def test_extra_headers_applied_to_native_openai_without_custom_base(
 
 
 def test_no_extra_headers_leaves_litellm_headers_untouched(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("STRIX_LLM", "openai/some-model")
+    monkeypatch.setenv("SDEVPRO_LLM", "openai/some-model")
     monkeypatch.setenv("LLM_API_BASE", "https://gateway.example/v1")
     monkeypatch.setenv("LLM_API_KEY", "token")
 

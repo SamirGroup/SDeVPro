@@ -171,7 +171,7 @@ async def run_strix_scan(
     resolved_model = (model or settings.llm.model or "").strip()
     if not resolved_model:
         raise RuntimeError(
-            "No LLM model configured. Set STRIX_LLM env or pass model= to run_strix_scan().",
+            "No LLM model configured. Set SDEVPRO_LLM env or pass model= to run_strix_scan().",
         )
     logger.info("LLM model resolved: %s", resolved_model)
     chat_completions_tools = uses_chat_completions_tool_schema(resolved_model, settings)

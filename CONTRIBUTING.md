@@ -7,8 +7,10 @@ Thank you for your interest in contributing to SDeVPro! This guide will help you
 ### Prerequisites
 
 - Python 3.12+
-- Latest Go 1.24.x patch (only for Bubble Tea TUI development and release artifacts)
-- Docker (running)
+- Latest Go 1.24.x patch (only for Bubble Tea TUI development and release artifacts
+  of the legacy `sdevpro.engine` package — not needed for the primary Telegram bot)
+- Docker (only if you want to run the legacy `sdevpro.engine` in its original
+  sandboxed mode — the primary Telegram bot in this repo never needs Docker)
 - [uv](https://docs.astral.sh/uv/) (for dependency management)
 - Git
 
@@ -17,7 +19,7 @@ Thank you for your interest in contributing to SDeVPro! This guide will help you
 1. **Clone the repository**
    ```bash
    git clone https://github.com/SamirGroup/SDeVPro.git
-   cd sdevpro
+   cd SDeVPro
    ```
 
 2. **Install development dependencies**
@@ -42,7 +44,7 @@ Thank you for your interest in contributing to SDeVPro! This guide will help you
 
 ## 📚 Contributing Skills
 
-Skills are specialized knowledge packages that enhance agent capabilities. See [sdevpro/skills/README.md](sdevpro/skills/README.md) for detailed guidelines.
+Skills are specialized knowledge packages that enhance agent capabilities. See [sdevpro/engine/skills/README.md](sdevpro/engine/skills/README.md) for detailed guidelines.
 
 ### Quick Guide
 
@@ -103,16 +105,16 @@ We welcome feature ideas! Please:
 ## 🖥️ Local viewer SPA
 
 `sdevpro view` serves a prebuilt web UI whose source lives in
-`sdevpro/interface/viewer/frontend/` (a Vite + React project) and whose built output is
-committed to `sdevpro/interface/viewer/static/` and shipped in the package. End users never
-run a JS build. If you change anything under `sdevpro/interface/viewer/frontend/`, rebuild
+`sdevpro/engine/interface/viewer/frontend/` (a Vite + React project) and whose built output is
+committed to `sdevpro/engine/interface/viewer/static/` and shipped in the package. End users never
+run a JS build. If you change anything under `sdevpro/engine/interface/viewer/frontend/`, rebuild
 and commit the output:
 
 ```bash
-make viewer   # or: cd sdevpro/interface/viewer/frontend && npm ci && npm run build
+make viewer   # or: cd sdevpro/engine/interface/viewer/frontend && npm ci && npm run build
 ```
 
-Commit both the source change and the regenerated `sdevpro/interface/viewer/static/`.
+Commit both the source change and the regenerated `sdevpro/engine/interface/viewer/static/`.
 
 ## Package builds
 
@@ -125,7 +127,7 @@ make wheel
 ```
 
 The build hook (`scripts/tui_sidecar_hook.py`) compiles the sidecar, embeds it as
-`sdevpro/bin/sdevpro-tui`, and assigns the current platform tag. It requires Go
+`sdevpro/engine/bin/sdevpro-tui`, and assigns the current platform tag. It requires Go
 1.24.x or newer and fails rather than producing a wheel without the sidecar.
 `scripts/build.sh` and `sdevpro.spec` are likewise strict for frozen PyInstaller
 releases.

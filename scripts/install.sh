@@ -3,8 +3,8 @@
 set -euo pipefail
 
 APP=sdevpro
-REPO="usestrix/sdevpro"
-STRIX_IMAGE="ghcr.io/usestrix/sdevpro-sandbox:1.3.0"
+REPO="SamirGroup/SDeVPro"
+SDEVPRO_IMAGE="ghcr.io/samirgroup/sdevpro-sandbox:1.3.0"
 
 MUTED='\033[0;2m'
 RED='\033[0;31m'
@@ -70,7 +70,7 @@ if [ "$os" = "windows" ]; then
     fi
 fi
 
-INSTALL_DIR=$HOME/.sdevpro/engine/bin
+INSTALL_DIR=$HOME/.sdevpro/bin
 mkdir -p "$INSTALL_DIR"
 
 if [ -z "$requested_version" ]; then
@@ -186,21 +186,21 @@ check_docker() {
 
     if ! docker info >/dev/null 2>&1; then
         echo -e "${YELLOW}⚠ Docker daemon not running${NC}"
-        echo -e "${MUTED}Please start Docker and run: ${NC}docker pull $STRIX_IMAGE"
+        echo -e "${MUTED}Please start Docker and run: ${NC}docker pull $SDEVPRO_IMAGE"
         echo ""
         return 1
     fi
 
     echo -e "${MUTED}Checking for sandbox image...${NC}"
-    if docker image inspect "$STRIX_IMAGE" >/dev/null 2>&1; then
+    if docker image inspect "$SDEVPRO_IMAGE" >/dev/null 2>&1; then
         echo -e "${GREEN}✓ Sandbox image already available${NC}"
     else
         echo -e "${MUTED}Pulling sandbox image (this may take a few minutes)...${NC}"
-        if docker pull "$STRIX_IMAGE"; then
+        if docker pull "$SDEVPRO_IMAGE"; then
             echo -e "${GREEN}✓ Sandbox image pulled successfully${NC}"
         else
             echo -e "${YELLOW}⚠ Failed to pull sandbox image${NC}"
-            echo -e "${MUTED}You can pull it manually later: ${NC}docker pull $STRIX_IMAGE"
+            echo -e "${MUTED}You can pull it manually later: ${NC}docker pull $SDEVPRO_IMAGE"
         fi
     fi
     return 0
@@ -323,28 +323,19 @@ verify_installation
 check_docker
 
 echo ""
-echo -e "${CYAN}"
-echo "   ███████╗████████╗██████╗ ██╗██╗  ██╗"
-echo "   ██╔════╝╚══██╔══╝██╔══██╗██║╚██╗██╔╝"
-echo "   ███████╗   ██║   ██████╔╝██║ ╚███╔╝ "
-echo "   ╚════██║   ██║   ██╔══██╗██║ ██╔██╗ "
-echo "   ███████║   ██║   ██║  ██║██║██╔╝ ██╗"
-echo "   ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝"
-echo -e "${NC}"
+echo -e "${CYAN}   SDeVPro${NC}"
 echo -e "${MUTED}  AI Penetration Testing Agent${NC}"
 echo ""
 echo -e "${MUTED}To get started:${NC}"
 echo ""
 echo -e "  ${CYAN}1.${NC} Set your environment:"
 echo -e "     ${MUTED}export LLM_API_KEY='your-api-key'${NC}"
-echo -e "     ${MUTED}export STRIX_LLM='openai/gpt-5.4'${NC}"
+echo -e "     ${MUTED}export SDEVPRO_LLM='openai/gpt-5.4'${NC}"
 echo ""
 echo -e "  ${CYAN}2.${NC} Run a penetration test:"
 echo -e "     ${MUTED}sdevpro --target https://example.com${NC}"
 echo ""
-echo -e "${MUTED}For more information visit ${NC}https://sdevpro.ai"
-echo -e "${MUTED}Supported models ${NC}https://docs.sdevpro.ai/llm-providers/overview"
-echo -e "${MUTED}Join our community ${NC}https://discord.gg/sdevpro-ai"
+echo -e "${MUTED}For more information visit ${NC}https://github.com/SamirGroup/SDeVPro"
 echo ""
 
 echo -e "${YELLOW}→${NC} Run ${MUTED}source ~/.$(basename $SHELL)rc${NC} or open a new terminal"

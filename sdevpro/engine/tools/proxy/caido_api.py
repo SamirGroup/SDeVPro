@@ -58,7 +58,7 @@ _REQ_FIELD_MAP: dict[SortBy, tuple[str, str]] = {
 
 
 def caido_url() -> str:
-    return os.environ.get("STRIX_CAIDO_URL", _DEFAULT_CAIDO_URL).rstrip("/")
+    return os.environ.get("SDEVPRO_CAIDO_URL", _DEFAULT_CAIDO_URL).rstrip("/")
 
 
 def _graphql_url() -> str:

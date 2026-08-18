@@ -75,7 +75,7 @@ logs/
 tensorboard/
 
 # Agent execution traces
-strix_runs/
+sdevpro_runs/
 agent_runs/
 
 # Misc
@@ -97,7 +97,7 @@ schema.graphql
 # Root-only local data and reference checkouts
 /.benchmarks/
 /references/
-/strix_runs_main/
+/sdevpro_runs_main/
 
 # SDeVPro engine + bot runtime data (schedules, consent, scan history, logs)
 /sdevpro_data/

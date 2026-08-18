@@ -283,7 +283,7 @@ class _DummyModel(Model):
 
 @pytest.fixture
 def _reset_settings(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
-    for key in ("STRIX_LLM", "LLM_DISABLE_STREAMING"):
+    for key in ("SDEVPRO_LLM", "LLM_DISABLE_STREAMING"):
         monkeypatch.delenv(key, raising=False)
     monkeypatch.setattr(loader, "_cached", None)
     monkeypatch.setattr(loader, "_override", None)

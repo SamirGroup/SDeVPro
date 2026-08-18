@@ -1,10 +1,10 @@
 """Viewer email verification state and the relay client.
 
 The local viewer proxies email verification and encrypted-report delivery to
-the SDeVPro relay (``STRIX_APP_URL``). The browser never talks to the relay
+the SDeVPro relay (``SDEVPRO_APP_URL``). The browser never talks to the relay
 directly, and the report password generated locally is never sent to it.
 
-State lives in ``~/.sdevpro/engine/viewer-auth.json`` (0600). ``is_verified`` is a local
+State lives in ``~/.sdevpro/viewer-auth.json`` (0600). ``is_verified`` is a local
 flag that unlocks browsing the run history list; the relay still enforces token
 expiry when a report is actually sent.
 """

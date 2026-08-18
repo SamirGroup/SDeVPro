@@ -60,7 +60,7 @@ if [ "$OS_NAME" = "windows" ]; then
     TUI_BINARY="${TUI_BINARY}.exe"
 fi
 mkdir -p build/sidecar
-(cd sdevpro/engine/interface/tui && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o "../../../$TUI_BINARY" ./cmd/sdevpro-tui)
+(cd sdevpro/engine/interface/tui && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o "../../../../$TUI_BINARY" ./cmd/sdevpro-tui)
 
 echo -e "\n${BLUE}Building binary with PyInstaller...${NC}"
 uv run pyinstaller sdevpro.spec --noconfirm

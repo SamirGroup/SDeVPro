@@ -687,7 +687,7 @@ def _configure_extra_headers(llm: LlmSettings) -> None:
     them via ``LLM_EXTRA_HEADERS``; they are applied to both routing paths:
     the LiteLLM route (``litellm.headers``) and the SDK-native OpenAI route
     (a default client carrying ``default_headers``), so they take effect
-    regardless of the ``STRIX_LLM`` prefix.
+    regardless of the ``SDEVPRO_LLM`` prefix.
     """
     headers = llm.extra_headers
     if not headers:

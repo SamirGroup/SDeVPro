@@ -33,7 +33,7 @@ def _resolve_sandbox_image() -> str:
     image = load_settings().runtime.image
     if not image:
         raise RuntimeError(
-            "strix_image is not configured. Set it in ~/.sdevpro/engine/cli-config.json.",
+            "strix_image is not configured. Set it in ~/.sdevpro/cli-config.json.",
         )
     return image
 
@@ -58,7 +58,7 @@ async def run_cli(args: Any) -> None:  # noqa: PLR0915
     results_text = Text()
     results_text.append("Output", style="dim")
     results_text.append("  ")
-    results_text.append(f"strix_runs/{args.run_name}", style="#60a5fa")
+    results_text.append(f"sdevpro_runs/{args.run_name}", style="#60a5fa")
 
     note_text = Text()
     note_text.append("\n\n", style="dim")
@@ -73,7 +73,7 @@ async def run_cli(args: Any) -> None:  # noqa: PLR0915
             results_text,
             note_text,
         ),
-        title="[bold white]STRIX",
+        title="[bold white]SDEVPRO",
         title_align="left",
         border_style="#22c55e",
         padding=(1, 2),
@@ -155,7 +155,7 @@ async def run_cli(args: Any) -> None:  # noqa: PLR0915
 
         return Panel(
             status_text,
-            title="[bold white]STRIX",
+            title="[bold white]SDEVPRO",
             title_align="left",
             border_style="#22c55e",
             padding=(1, 2),
@@ -223,7 +223,7 @@ async def run_cli(args: Any) -> None:  # noqa: PLR0915
                 "\n\n",
                 report_state.final_scan_result,
             ),
-            title="[bold white]STRIX",
+            title="[bold white]SDEVPRO",
             title_align="left",
             border_style="#60a5fa",
             padding=(1, 2),

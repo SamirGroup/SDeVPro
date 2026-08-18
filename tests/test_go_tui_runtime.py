@@ -102,7 +102,7 @@ def test_child_environment_excludes_credentials(monkeypatch: pytest.MonkeyPatch)
     monkeypatch.setenv("AWS_SESSION_TOKEN", "aws-token")
     monkeypatch.setenv("AWS_WEB_IDENTITY_TOKEN_FILE", "/var/run/secrets/aws-token")
     monkeypatch.setenv("VERTEXAI_CREDENTIALS", '{"private_key":"secret"}')
-    monkeypatch.setenv("STRIX_TUI_TOKEN", "stale-transport-token")
+    monkeypatch.setenv("SDEVPRO_TUI_TOKEN", "stale-transport-token")
     monkeypatch.setenv("TERM", "xterm-256color")
 
     env = sidecar.child_environment()
@@ -114,7 +114,7 @@ def test_child_environment_excludes_credentials(monkeypatch: pytest.MonkeyPatch)
     assert "AWS_SESSION_TOKEN" not in env
     assert "AWS_WEB_IDENTITY_TOKEN_FILE" not in env
     assert "VERTEXAI_CREDENTIALS" not in env
-    assert "STRIX_TUI_TOKEN" not in env
+    assert "SDEVPRO_TUI_TOKEN" not in env
 
 
 def test_accept_authenticated_connection() -> None:
@@ -159,12 +159,12 @@ async def test_windows_transport_launches_without_inherited_fd() -> None:
 import os
 import socket
 
-host, port = os.environ["STRIX_TUI_ADDR"].rsplit(":", 1)
+host, port = os.environ["SDEVPRO_TUI_ADDR"].rsplit(":", 1)
 with socket.create_connection((host, int(port))) as connection:
-    connection.sendall(os.environ["STRIX_TUI_TOKEN"].encode("ascii"))
+    connection.sendall(os.environ["SDEVPRO_TUI_TOKEN"].encode("ascii"))
 """
     env = os.environ.copy()
-    env.pop("STRIX_TUI_FD", None)
+    env.pop("SDEVPRO_TUI_FD", None)
 
     process, connection = await sidecar._launch_windows_tui_process(
         [sys.executable, "-c", child], env, None

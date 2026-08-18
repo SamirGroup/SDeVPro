@@ -47,12 +47,13 @@ xususiyatlari:
 - **GitHub repository skaneri.** Ochiq yoki (token bilan) yopiq repolarni
   klonlab, kod ichidagi maxfiy kalitlar va xavfli naqshlarni tekshiradi.
 
-Kod bazasi ichki texnik sabablarga ko'ra ikkita Python paketidan iborat:
-`sdevpro/` (asosiy, Docker'siz, yangi dvigatel) va `sdevpro/` (ichki modul
-nomi — asl ko'p-agentli, Docker-sandbox asosidagi chuqur tekshiruv mexanizmi;
-foydalanuvchiga ko'rinmaydi, hech qanday tashqi xizmatga ulanmaydi va
-standart ishga tushirishda ishlatilmaydi). Ikkalasi ham to'liq mustaqil —
-`sdevpro/`.
+Butun loyiha **yagona** `sdevpro/` Python paketi ostida joylashgan. Asosiy,
+Docker'siz mahsulot to'g'ridan-to'g'ri `sdevpro/` ichida (`scanner/`,
+`telegram_bot.py` va h.k.), asl ko'p-agentli/Docker-sandbox asosidagi chuqur
+tekshiruv mexanizmi esa ichki `sdevpro/engine/` quyi-paketiga ko'chirilgan
+(buyruq nomi baribir `sdevpro`). Ikkalasi mustaqil — `sdevpro/` paketining
+o'zi `sdevpro/engine/`ni import qilmaydi — va hech biri hech qanday tashqi
+"Strix" xizmatiga ulanmaydi.
 
 > [!WARNING]
 > **Faqat vakolat berilgan tekshiruvlar uchun.** SDeVPro sizga ko'rsatgan
@@ -280,26 +281,27 @@ yangisini oling.
 
 ```
 SDeVPro/
-├── sdevpro/              # Asosiy, Docker'siz mahsulot
-│   ├── scanner/          # recon, web probe, kod skaneri, GitHub klonlash
-│   ├── ai_analyst.py     # LLM-asoslangan triage/hisobot generatsiyasi (ko'p tilli)
-│   ├── reporter.py       # Telegram matn + PDF + TXT hisobot (ko'p tilli)
-│   ├── log_analyzer.py   # Server-log hujum-manba tahlili (ko'p tilli)
-│   ├── telegram_bot.py   # Bot buyruqlari, til, token, jadval, consent
-│   ├── i18n.py            # uz/ru/en tarjimalar
-│   ├── crypto_utils.py    # Foydalanuvchi tokenlarini shifrlash
-│   ├── kvstore.py         # Saqlash backend abstraksiyasi (file / Upstash Redis)
-│   ├── storage.py         # Schedule/tarix/consent/foydalanuvchi sozlamalari
-│   ├── github_scan.py     # GitHub/GitLab repo klonlash
-│   ├── webhook_app.py     # Vercel/serverless uchun Flask webhook adapteri
-│   └── config.py          # .env orqali sozlash
-├── api/index.py          # Vercel kirish nuqtasi
-├── vercel.json            # Vercel marshrutlash + cron sozlamalari
-├── requirements.txt        # Vercel uchun minimal bog'liqliklar
-├── sdevpro/                 # Ichki modul nomi — asl ko'p-agentli dvigatel
-│                          # (Docker-asoslangan, standart oqimda ishlatilmaydi)
+├── sdevpro/                 # Yagona top-level paket — barcha kod shu ostida
+│   ├── scanner/             # recon, web probe, kod skaneri, GitHub klonlash
+│   ├── ai_analyst.py        # LLM-asoslangan triage/hisobot generatsiyasi (ko'p tilli)
+│   ├── reporter.py          # Telegram matn + PDF + TXT hisobot (ko'p tilli)
+│   ├── log_analyzer.py      # Server-log hujum-manba tahlili (ko'p tilli)
+│   ├── telegram_bot.py      # Bot buyruqlari, til, token, jadval, consent
+│   ├── i18n.py               # uz/ru/en tarjimalar
+│   ├── crypto_utils.py       # Foydalanuvchi tokenlarini shifrlash
+│   ├── kvstore.py            # Saqlash backend abstraksiyasi (file / Upstash Redis)
+│   ├── storage.py            # Schedule/tarix/consent/foydalanuvchi sozlamalari
+│   ├── github_scan.py        # GitHub/GitLab repo klonlash
+│   ├── webhook_app.py        # Vercel/serverless uchun Flask webhook adapteri
+│   ├── config.py             # .env orqali sozlash
+│   └── engine/               # Asl ko'p-agentli dvigatel (Docker-asoslangan;
+│                              # `sdevpro` CLI buyrug'i shu yerga ishora qiladi,
+│                              # standart Telegram-bot oqimida ishlatilmaydi)
+├── api/index.py             # Vercel kirish nuqtasi
+├── vercel.json               # Vercel marshrutlash + cron sozlamalari
+├── requirements.txt           # Vercel uchun minimal bog'liqliklar
 ├── .env.example
-└── NOTICE                 # Apache-2.0 talabiga ko'ra o'zgarishlar ro'yxati
+└── NOTICE                    # Apache-2.0 talabiga ko'ra o'zgarishlar ro'yxati
 ```
 
 ## Litsenziya
