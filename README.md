@@ -14,7 +14,7 @@
 
 ## Loyiha haqida
 
-**SDeVPro** — [Strix](https://github.com/usestrix/strix) (Apache-2.0) ochiq
+**SDeVPro** —  (Apache-2.0) ochiq
 manbali AI-pentesting vositasi asosida qurilgan, to'liq mahalliy (on-premise)
 ishlaydigan xavfsizlik platformasi. O'zgarishlar ro'yxati [NOTICE](NOTICE)
 faylida keltirilgan. Asosiy farqlar:
@@ -35,9 +35,9 @@ faylida keltirilgan. Asosiy farqlar:
   IP manzillar va hujum urinishlarini (SQLi, XSS, brute-force va h.k.)
   ajratib beradi.
 
-Original `strix/` dvigateli (ko'p-agentli, Docker-sandbox asosida ishlaydigan
+Original `sdevpro/` dvigateli (ko'p-agentli, Docker-sandbox asosida ishlaydigan
 chuqur tekshiruv tizimi) ma'lumot/ilova sifatida saqlab qolingan — kelajakda
-Docker mavjud muhitlarda kengaytirilgan (`strix --target ...`) rejim sifatida
+Docker mavjud muhitlarda kengaytirilgan (`sdevpro --target ...`) rejim sifatida
 ishlatilishi mumkin, lekin SDeVPro'ning asosiy mahsuloti undan mustaqil.
 
 > [!WARNING]

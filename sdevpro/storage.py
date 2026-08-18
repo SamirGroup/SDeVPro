@@ -1,40 +1,22 @@
-"""Small JSON-file-backed persistence for schedules, consent, and scan history.
-
-Scale target is one operator's bot serving a handful of clients — a real
-database would be overkill. Every write is atomic (write to a temp file,
-then replace) so a crash mid-write cannot corrupt the store.
+"""Schedules, consent, scan history, and per-user settings — backed by
+``kvstore.get_store()`` (local JSON files by default, optional Upstash
+Redis for serverless deployments).
 """
 
 from __future__ import annotations
 
-import json
-import os
 import threading
 from dataclasses import asdict, dataclass, field
-from pathlib import Path
-from typing import Any
 
-from sdevpro.config import get_settings
+from sdevpro import crypto_utils
+from sdevpro.i18n import DEFAULT_LANGUAGE
+from sdevpro.kvstore import get_store
 from sdevpro.scanner.models import ScanResult
 
 
 _lock = threading.Lock()
 
-
-def _atomic_write(path: Path, data: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
-    os.replace(tmp, path)
-
-
-def _read_json(path: Path) -> dict[str, Any]:
-    if not path.is_file():
-        return {}
-    try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
-        return {}
+_SCHEDULES_KEY = "schedules"
 
 
 @dataclass
@@ -49,34 +31,30 @@ class ScheduleEntry:
         return f"{self.chat_id}::{self.target}"
 
 
-def _schedules_path() -> Path:
-    return get_settings().data_dir / "schedules" / "schedules.json"
-
-
 def load_schedules() -> list[ScheduleEntry]:
     with _lock:
-        data = _read_json(_schedules_path())
+        data = get_store().get(_SCHEDULES_KEY) or {}
     return [ScheduleEntry(**item) for item in data.get("schedules", [])]
 
 
 def save_schedule(entry: ScheduleEntry) -> None:
     with _lock:
-        path = _schedules_path()
-        data = _read_json(path)
+        store = get_store()
+        data = store.get(_SCHEDULES_KEY) or {}
         schedules = [ScheduleEntry(**item) for item in data.get("schedules", [])]
         schedules = [s for s in schedules if s.key() != entry.key()]
         schedules.append(entry)
-        _atomic_write(path, {"schedules": [asdict(s) for s in schedules]})
+        store.set(_SCHEDULES_KEY, {"schedules": [asdict(s) for s in schedules]})
 
 
 def remove_schedule(chat_id: int, target: str) -> bool:
     with _lock:
-        path = _schedules_path()
-        data = _read_json(path)
+        store = get_store()
+        data = store.get(_SCHEDULES_KEY) or {}
         schedules = [ScheduleEntry(**item) for item in data.get("schedules", [])]
         remaining = [s for s in schedules if s.key() != f"{chat_id}::{target}"]
         removed = len(remaining) != len(schedules)
-        _atomic_write(path, {"schedules": [asdict(s) for s in remaining]})
+        store.set(_SCHEDULES_KEY, {"schedules": [asdict(s) for s in remaining]})
         return removed
 
 
@@ -84,38 +62,108 @@ def list_schedules_for_chat(chat_id: int) -> list[ScheduleEntry]:
     return [s for s in load_schedules() if s.chat_id == chat_id]
 
 
-def _history_path(chat_id: int) -> Path:
-    return get_settings().data_dir / "history" / f"{chat_id}.json"
+def _history_key(chat_id: int) -> str:
+    return f"history::{chat_id}"
 
 
 def save_last_result(chat_id: int, result: ScanResult) -> None:
     with _lock:
-        _atomic_write(_history_path(chat_id), {"last_result": result.to_dict()})
+        get_store().set(_history_key(chat_id), {"last_result": result.to_dict()})
 
 
 def load_last_result(chat_id: int) -> ScanResult | None:
     with _lock:
-        data = _read_json(_history_path(chat_id))
+        data = get_store().get(_history_key(chat_id)) or {}
     raw = data.get("last_result")
     return ScanResult.from_dict(raw) if raw else None
 
 
-_consent_lock = threading.Lock()
-
-
-def _consent_path() -> Path:
-    return get_settings().data_dir / "consent.json"
+def _consent_key(chat_id: int) -> str:
+    return f"consent::{chat_id}"
 
 
 def has_consented(chat_id: int) -> bool:
-    with _consent_lock:
-        data = _read_json(_consent_path())
-    return bool(data.get(str(chat_id)))
+    with _lock:
+        data = get_store().get(_consent_key(chat_id))
+    return bool(data)
 
 
 def record_consent(chat_id: int) -> None:
-    with _consent_lock:
-        path = _consent_path()
-        data = _read_json(path)
-        data[str(chat_id)] = True
-        _atomic_write(path, data)
+    with _lock:
+        get_store().set(_consent_key(chat_id), True)
+
+
+# ---------------------------------------------------------------------------
+# Per-user settings: language + LLM model/API key (bring-your-own-token) +
+# optional GitHub token for private repo scans.
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class UserSettings:
+    user_id: int
+    language: str = DEFAULT_LANGUAGE
+    llm_model: str = ""
+    llm_api_key_encrypted: str = ""
+    llm_api_base: str = ""
+    github_token_encrypted: str = ""
+
+    def has_llm_key(self) -> bool:
+        return bool(self.llm_model and self.llm_api_key_encrypted)
+
+    def decrypted_llm_api_key(self) -> str:
+        return crypto_utils.decrypt_text(self.llm_api_key_encrypted)
+
+    def decrypted_github_token(self) -> str:
+        return crypto_utils.decrypt_text(self.github_token_encrypted)
+
+
+def _user_key(user_id: int) -> str:
+    return f"user::{user_id}"
+
+
+def get_user_settings(user_id: int) -> UserSettings:
+    with _lock:
+        data = get_store().get(_user_key(user_id))
+    if not data:
+        return UserSettings(user_id=user_id)
+    known = {f.name for f in UserSettings.__dataclass_fields__.values()}
+    return UserSettings(**{k: v for k, v in data.items() if k in known})
+
+
+def save_user_settings(settings: UserSettings) -> None:
+    with _lock:
+        get_store().set(_user_key(settings.user_id), asdict(settings))
+
+
+def set_user_language(user_id: int, language: str) -> UserSettings:
+    settings = get_user_settings(user_id)
+    settings.language = language
+    save_user_settings(settings)
+    return settings
+
+
+def set_user_llm_key(user_id: int, model: str, api_key: str, api_base: str = "") -> UserSettings:
+    settings = get_user_settings(user_id)
+    settings.llm_model = model
+    settings.llm_api_key_encrypted = crypto_utils.encrypt_text(api_key)
+    settings.llm_api_base = api_base
+    save_user_settings(settings)
+    return settings
+
+
+def delete_user_llm_key(user_id: int) -> bool:
+    settings = get_user_settings(user_id)
+    had_key = settings.has_llm_key()
+    settings.llm_model = ""
+    settings.llm_api_key_encrypted = ""
+    settings.llm_api_base = ""
+    save_user_settings(settings)
+    return had_key
+
+
+def set_user_github_token(user_id: int, token: str) -> UserSettings:
+    settings = get_user_settings(user_id)
+    settings.github_token_encrypted = crypto_utils.encrypt_text(token)
+    save_user_settings(settings)
+    return settings

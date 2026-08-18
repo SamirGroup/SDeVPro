@@ -1,8 +1,13 @@
 """LLM-based triage: turns raw probe findings into a prioritized, explained report.
 
 Uses ``litellm`` so any provider Strix itself supports also works here
-(``STRIX_LLM``/``SDEVPRO_LLM`` model strings like ``anthropic/claude-sonnet-4-6``,
-``openai/gpt-5.4``, ``gemini/gemini-3-pro``, ``ollama/llama3``, ...).
+(model strings like ``anthropic/claude-sonnet-4-6``, ``openai/gpt-5.4``,
+``gemini/gemini-3-pro``, ``ollama/llama3``, ...).
+
+Every caller supplies its own ``model``/``api_key`` (normally the requesting
+Telegram user's own key, set via ``/setkey``) — this module has no concept
+of a single shared key, so one user's request always uses their own
+credentials and never another user's.
 
 Design principle: the AI never invents new findings. It only re-ranks,
 explains, and writes remediation/defense guidance for what the probes in
@@ -16,50 +21,68 @@ import json
 import logging
 import re
 
-from sdevpro.config import get_settings
+from sdevpro.i18n import DEFAULT_LANGUAGE
 from sdevpro.scanner.models import ScanResult
 
 
 logger = logging.getLogger("sdevpro.ai_analyst")
 
-_SYSTEM_PROMPT = """Siz SDeVPro platformasining AI xavfsizlik tahlilchisisiz.
-Sizga avtomatik skanerlash vositasi tomonidan aniqlangan xom (raw) xavfsizlik
-topilmalari va texnik ma'lumotlar (recon) beriladi. Vazifangiz:
 
-1. Har bir topilma uchun aniqroq va tushunarli tavsif, real hujum stsenariysi
-   (attack_vector) va amaliy tuzatish yo'riqnomasi (remediation) yozish.
-2. Agar CVSS ball berilmagan bo'lsa, taxminiy CVSS 3.1 ballni baholash.
-3. Umumiy holat bo'yicha qisqa, tushunarli xulosa (summary) yozish — 3-6 gap,
-   o'zbek tilida, texnik bo'lmagan mijoz ham tushunadigan darajada.
-4. Umumiy himoya tavsiyalari (defense_recommendations) — tizimni qanday
-   mustahkamlash kerakligi haqida amaliy qadamlar ro'yxati.
+class MissingLlmKeyError(RuntimeError):
+    """Raised when no LLM model/API key is available for this request."""
 
-MUHIM QOIDA: Yangi, dalilsiz "topilma" o'ylab topmang. Faqat sizga berilgan
-topilmalar ro'yxatidagi elementlarni yaxshilang/izohlang. Agar biror topilma
-haqiqatan xato yoki ahamiyatsiz (false positive) deb hisoblasangiz, uni olib
-tashlamang — shunchaki tavsifda buni qayd eting.
 
-Javobni FAQAT quyidagi JSON formatda qaytaring, boshqa hech qanday matn
-qo'shmang:
-{
+_LANGUAGE_NAMES = {
+    "uz": "Uzbek (o'zbek tili)",
+    "ru": "Russian (русский язык)",
+    "en": "English",
+}
+
+_SYSTEM_PROMPT_TEMPLATE = """You are SDeVPro's AI security analyst.
+You receive raw security findings and technical recon data produced by an
+automated scanner. Your job:
+
+1. For every finding, write a clearer description, a realistic attack
+   scenario (attack_vector), and practical remediation guidance.
+2. If no CVSS score is given, estimate one (CVSS 3.1).
+3. Write a short, clear overall summary (3-6 sentences) that a non-technical
+   client can understand.
+4. Write general defense_recommendations — practical steps to harden the
+   system as a whole.
+
+IMPORTANT RULE: never invent a new finding without evidence. Only improve or
+explain the items in the findings list you are given. If you believe a
+finding is a false positive, do not remove it — just note that in its
+description.
+
+Write ALL text (summary, defense_recommendations, description,
+attack_vector, remediation) in {language_name}.
+
+Reply with ONLY the following JSON, no other text:
+{{
   "summary": "...",
   "defense_recommendations": "...",
   "findings": [
-    {
+    {{
       "title": "...",
       "severity": "critical|high|medium|low|info",
       "category": "...",
       "description": "...",
       "attack_vector": "...",
       "remediation": "...",
-      "cwe": "CWE-XXX yoki null",
+      "cwe": "CWE-XXX or null",
       "cvss_score": 0.0
-    }
+    }}
   ]
-}
-"findings" ro'yxati sizga berilgan topilmalar bilan bir xil sonda va bir xil
-tartibda bo'lishi kerak (faqat matnlarni yaxshilaysiz).
+}}
+The "findings" list must have the same length and order as the findings you
+were given (only improve the text/fields).
 """
+
+
+def _system_prompt(language: str) -> str:
+    language_name = _LANGUAGE_NAMES.get(language, _LANGUAGE_NAMES[DEFAULT_LANGUAGE])
+    return _SYSTEM_PROMPT_TEMPLATE.format(language_name=language_name)
 
 
 def _extract_json(text: str) -> dict[str, object] | None:
@@ -101,21 +124,24 @@ def _build_user_prompt(result: ScanResult) -> str:
         "findings": findings_payload,
     }
     return (
-        "Quyidagi skanerlash natijalarini tahlil qiling va yuqoridagi JSON "
-        "formatda javob bering:\n\n" + json.dumps(payload, ensure_ascii=False, default=str)
+        "Analyze the following scan results and reply in the JSON format "
+        "described above:\n\n" + json.dumps(payload, ensure_ascii=False, default=str)
     )
 
 
-async def triage_scan(result: ScanResult) -> None:
+async def triage_scan(
+    result: ScanResult,
+    *,
+    model: str,
+    api_key: str,
+    api_base: str = "",
+    language: str = DEFAULT_LANGUAGE,
+) -> None:
     """Mutate ``result`` in place: enrich findings, set summary + defense advice."""
-    settings = get_settings()
-    if not settings.llm_model:
-        raise RuntimeError(
-            "LLM sozlanmagan (SDEVPRO_LLM / STRIX_LLM bo'sh). .env faylida "
-            "SDEVPRO_LLM va SDEVPRO_LLM_API_KEY qiymatlarini belgilang."
-        )
+    if not model or not api_key:
+        raise MissingLlmKeyError("No LLM model/API key provided for this request.")
     if not result.findings and not result.raw_evidence:
-        result.summary = "Skanerlashda hech qanday ma'lumot yig'ilmadi."
+        result.summary = "-"
         return
 
     import litellm
@@ -124,23 +150,22 @@ async def triage_scan(result: ScanResult) -> None:
     litellm.suppress_debug_info = True
 
     kwargs: dict[str, object] = {
-        "model": settings.llm_model,
+        "model": model,
+        "api_key": api_key,
         "messages": [
-            {"role": "system", "content": _SYSTEM_PROMPT},
+            {"role": "system", "content": _system_prompt(language)},
             {"role": "user", "content": _build_user_prompt(result)},
         ],
         "timeout": 120,
     }
-    if settings.llm_api_key:
-        kwargs["api_key"] = settings.llm_api_key
-    if settings.llm_api_base:
-        kwargs["api_base"] = settings.llm_api_base
+    if api_base:
+        kwargs["api_base"] = api_base
 
     response = await litellm.acompletion(**kwargs)
     content = response.choices[0].message.content or ""
     parsed = _extract_json(content)
     if parsed is None:
-        result.summary = content[:2000] if content else "AI javobini tahlil qilib bo'lmadi."
+        result.summary = content[:2000] if content else "-"
         return
 
     result.summary = str(parsed.get("summary") or result.summary)
