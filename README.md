@@ -14,31 +14,39 @@
 
 ## Loyiha haqida
 
-**SDeVPro** —  (Apache-2.0) ochiq
-manbali AI-pentesting vositasi asosida qurilgan, to'liq mahalliy (on-premise)
-ishlaydigan xavfsizlik platformasi. O'zgarishlar ro'yxati [NOTICE](NOTICE)
-faylida keltirilgan. Asosiy farqlar:
+**SDeVPro** — to'liq mahalliy (on-premise) ishlaydigan, AI-asoslangan
+xavfsizlik tekshiruvi va monitoring platformasi. Litsenziya va kelib chiqish
+tarixi haqida to'liq ma'lumot [NOTICE](NOTICE) faylida keltirilgan. Asosiy
+xususiyatlari:
 
-- **Docker talab qilinmaydi.** Asosiy mahsulot — `sdevpro/` paketidagi yangi,
-  yengil skanerlash motori — to'g'ridan-to'g'ri Python orqali, hech qanday
+- **Docker talab qilinmaydi.** Asosiy mahsulot — `sdevpro/` paketidagi
+  skanerlash motori — to'g'ridan-to'g'ri Python orqali, hech qanday
   konteyner yoki tashqi sandbox'siz ishlaydi.
-- **Tashqi telemetriya butunlay o'chirilgan.** Original loyihadagi PostHog va
-  Scarf "phone home" hisobotlari va avtomatik yangilanish (self-update)
-  tekshiruvi kod darajasida butunlay o'chirilgan va endpoint/kalitlari olib
-  tashlangan — hech qanday skan yoki foydalanish ma'lumoti hech qayerga
-  yuborilmaydi.
-- **Telegram bot orqali ishlaydi.** Mijoz o'z tizimini (sayt, API, server)
-  botga yuboradi — bot to'liq tekshiruv o'tkazadi, AI yordamida xulosa va
-  tuzatish yo'riqnomasi beradi, va xohlasa belgilangan vaqt oralig'ida
-  (masalan har soatda) avtomatik qayta tekshirib, hisobot yuborib turadi.
+- **Hech qanday tashqi xizmatga ulanmaydi.** SDeVPro faqat (a) siz kiritgan
+  AI provayder (OpenAI/Anthropic/Gemini va h.k.) bilan to'g'ridan-to'g'ri, va
+  (b) tekshirilayotgan nishonning o'zi bilan aloqa qiladi. Hech qanday
+  telemetriya, analitika yoki uchinchi tomon "xavfsizlik platformasi"ga
+  ma'lumot yuborilmaydi.
+- **Har bir foydalanuvchi o'z AI tokeni bilan ishlaydi.** Token shifrlangan
+  holda saqlanadi va faqat o'sha foydalanuvchining so'rovlari uchun
+  ishlatiladi.
+- **Telegram bot orqali ishlaydi.** Mijoz o'z tizimini (sayt, API, server,
+  yoki GitHub repository) botga yuboradi — bot to'liq tekshiruv o'tkazadi, AI
+  yordamida xulosa va tuzatish yo'riqnomasi beradi, va xohlasa belgilangan
+  vaqt oralig'ida (masalan har soatda) avtomatik qayta tekshirib, hisobot
+  yuborib turadi. Interfeys 3 tilda: o'zbek, rus, ingliz.
 - **Server-log tahlili.** Mijoz o'z server logini yuborsa, bot undan shubhali
   IP manzillar va hujum urinishlarini (SQLi, XSS, brute-force va h.k.)
   ajratib beradi.
+- **GitHub repository skaneri.** Ochiq yoki (token bilan) yopiq repolarni
+  klonlab, kod ichidagi maxfiy kalitlar va xavfli naqshlarni tekshiradi.
 
-Original `sdevpro/` dvigateli (ko'p-agentli, Docker-sandbox asosida ishlaydigan
-chuqur tekshiruv tizimi) ma'lumot/ilova sifatida saqlab qolingan — kelajakda
-Docker mavjud muhitlarda kengaytirilgan (`sdevpro --target ...`) rejim sifatida
-ishlatilishi mumkin, lekin SDeVPro'ning asosiy mahsuloti undan mustaqil.
+Kod bazasi ichki texnik sabablarga ko'ra ikkita Python paketidan iborat:
+`sdevpro/` (asosiy, Docker'siz, yangi dvigatel) va `strix/` (ichki modul
+nomi — asl ko'p-agentli, Docker-sandbox asosidagi chuqur tekshiruv mexanizmi;
+foydalanuvchiga ko'rinmaydi, hech qanday tashqi xizmatga ulanmaydi va
+standart ishga tushirishda ishlatilmaydi). Ikkalasi ham to'liq mustaqil —
+`sdevpro/` paketi `strix/` papkasini import qilmaydi.
 
 > [!WARNING]
 > **Faqat vakolat berilgan tekshiruvlar uchun.** SDeVPro sizga ko'rsatgan
@@ -159,7 +167,7 @@ SDeVPro/
 │   ├── telegram_bot.py # Bot buyruqlari, jadval (schedule), consent
 │   ├── storage.py      # JSON-asoslangan saqlash (schedule/tarix)
 │   └── config.py       # .env orqali sozlash
-├── strix/              # Original ko'p-agentli dvigatel (Docker-asoslangan,
+├── sdevpro/              # Original ko'p-agentli dvigatel (Docker-asoslangan,
 │                        # ma'lumot/kengaytirilgan rejim sifatida saqlangan)
 ├── .env.example
 └── NOTICE               # Apache-2.0 talabiga ko'ra o'zgarishlar ro'yxati

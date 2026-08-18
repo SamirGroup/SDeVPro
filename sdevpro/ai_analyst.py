@@ -55,8 +55,9 @@ explain the items in the findings list you are given. If you believe a
 finding is a false positive, do not remove it — just note that in its
 description.
 
-Write ALL text (summary, defense_recommendations, description,
-attack_vector, remediation) in {language_name}.
+Write ALL text (title, category, summary, defense_recommendations,
+description, attack_vector, remediation) in {language_name}, even though the
+findings you receive are written in Uzbek.
 
 Reply with ONLY the following JSON, no other text:
 {{
@@ -178,6 +179,8 @@ async def triage_scan(
         for original, enriched in zip(result.findings, ai_findings, strict=False):
             if not isinstance(enriched, dict):
                 continue
+            original.title = str(enriched.get("title") or original.title)
+            original.category = str(enriched.get("category") or original.category)
             original.description = str(enriched.get("description") or original.description)
             original.attack_vector = str(enriched.get("attack_vector") or original.attack_vector)
             original.remediation = str(enriched.get("remediation") or original.remediation)

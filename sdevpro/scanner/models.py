@@ -67,6 +67,8 @@ class ScanResult:
     target: str
     scan_mode: str = "quick"
     whitebox: bool = False
+    target_kind: str = "web"  # "web" | "whitebox" | "github"
+    language: str = "uz"
     started_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     finished_at: str | None = None
     findings: list[Finding] = field(default_factory=list)
@@ -93,6 +95,8 @@ class ScanResult:
             "target": self.target,
             "scan_mode": self.scan_mode,
             "whitebox": self.whitebox,
+            "target_kind": self.target_kind,
+            "language": self.language,
             "started_at": self.started_at,
             "finished_at": self.finished_at,
             "findings": [f.to_dict() for f in self.findings],
@@ -108,6 +112,8 @@ class ScanResult:
             target=data.get("target", ""),
             scan_mode=data.get("scan_mode", "quick"),
             whitebox=bool(data.get("whitebox", False)),
+            target_kind=data.get("target_kind", "web"),
+            language=data.get("language", "uz"),
             started_at=data.get("started_at", ""),
             finished_at=data.get("finished_at"),
             findings=findings,
