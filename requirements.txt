@@ -1,0 +1,14 @@
+# Minimal dependency set for the Vercel (serverless/webhook) deployment.
+# This is intentionally separate from pyproject.toml's [sdevpro] extra,
+# which additionally includes python-telegram-bot's job-queue extra
+# (APScheduler) — not needed here since serverless scheduling goes through
+# Vercel Cron -> /api/cron instead of a long-lived JobQueue.
+flask>=3.0
+python-telegram-bot>=21.6
+litellm
+requests
+reportlab
+dnspython
+beautifulsoup4
+cryptography
+python-dotenv

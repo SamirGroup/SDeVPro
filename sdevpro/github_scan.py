@@ -9,8 +9,10 @@ just GitHub.
 
 from __future__ import annotations
 
+import os
 import re
 import shutil
+import stat
 import subprocess
 import tempfile
 from pathlib import Path
@@ -70,5 +72,15 @@ def clone_repo(url: str, token: str = "", *, timeout: int = 120) -> Path:
     return dest
 
 
+def _force_remove_readonly(func, target_path, _exc_info):  # noqa: ANN001, ANN202
+    # Git marks pack/object files read-only on Windows; rmtree can't delete
+    # them without clearing that bit first.
+    os.chmod(target_path, stat.S_IWRITE)
+    func(target_path)
+
+
 def cleanup(path: Path) -> None:
-    shutil.rmtree(path, ignore_errors=True)
+    try:
+        shutil.rmtree(path, onerror=_force_remove_readonly)
+    except OSError:
+        shutil.rmtree(path, ignore_errors=True)

@@ -53,11 +53,11 @@ jobs:
       - name: Build
         shell: bash
         env:
-          STRIX_WHEEL_PLATFORM_TAG: ${{ matrix.wheel-platform }}
+          SDEVPRO_WHEEL_PLATFORM_TAG: ${{ matrix.wheel-platform }}
         run: |
           uv sync --frozen
           uv build --wheel
-          uv run python -c 'import glob, os, sys, zipfile; wheels = glob.glob("dist/*.whl"); assert len(wheels) == 1, wheels; archive = zipfile.ZipFile(wheels[0]); tui = "sdevpro/bin/sdevpro-tui.exe" if sys.platform == "win32" else "sdevpro/bin/sdevpro-tui"; assert tui in archive.namelist(); metadata = archive.read(next(name for name in archive.namelist() if name.endswith(".dist-info/WHEEL"))).decode(); assert "Root-Is-Purelib: false" in metadata; assert "Tag: py3-none-" + os.environ["STRIX_WHEEL_PLATFORM_TAG"] in metadata'
+          uv run python -c 'import glob, os, sys, zipfile; wheels = glob.glob("dist/*.whl"); assert len(wheels) == 1, wheels; archive = zipfile.ZipFile(wheels[0]); tui = "sdevpro/bin/sdevpro-tui.exe" if sys.platform == "win32" else "sdevpro/bin/sdevpro-tui"; assert tui in archive.namelist(); metadata = archive.read(next(name for name in archive.namelist() if name.endswith(".dist-info/WHEEL"))).decode(); assert "Root-Is-Purelib: false" in metadata; assert "Tag: py3-none-" + os.environ["SDEVPRO_WHEEL_PLATFORM_TAG"] in metadata'
 
           uv run pyinstaller sdevpro.spec --noconfirm
 

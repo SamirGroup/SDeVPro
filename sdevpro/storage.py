@@ -26,9 +26,21 @@ class ScheduleEntry:
     interval_minutes: int
     created_by: int | None = None
     scan_mode: str = "quick"
+    last_run_at: str | None = None  # ISO timestamp; used by the cron-driven (serverless) runner
 
     def key(self) -> str:
         return f"{self.chat_id}::{self.target}"
+
+    def is_due(self, now) -> bool:  # noqa: ANN001
+        if self.last_run_at is None:
+            return True
+        from datetime import datetime, timedelta
+
+        try:
+            last = datetime.fromisoformat(self.last_run_at)
+        except ValueError:
+            return True
+        return now >= last + timedelta(minutes=self.interval_minutes)
 
 
 def load_schedules() -> list[ScheduleEntry]:
@@ -60,6 +72,19 @@ def remove_schedule(chat_id: int, target: str) -> bool:
 
 def list_schedules_for_chat(chat_id: int) -> list[ScheduleEntry]:
     return [s for s in load_schedules() if s.chat_id == chat_id]
+
+
+def mark_schedule_run(chat_id: int, target: str, when_iso: str) -> None:
+    """Record the last-run time for a schedule (used by the cron-driven runner)."""
+    with _lock:
+        store = get_store()
+        data = store.get(_SCHEDULES_KEY) or {}
+        schedules = [ScheduleEntry(**item) for item in data.get("schedules", [])]
+        key = f"{chat_id}::{target}"
+        for s in schedules:
+            if s.key() == key:
+                s.last_run_at = when_iso
+        store.set(_SCHEDULES_KEY, {"schedules": [asdict(s) for s in schedules]})
 
 
 def _history_key(chat_id: int) -> str:
@@ -103,6 +128,7 @@ def record_consent(chat_id: int) -> None:
 class UserSettings:
     user_id: int
     language: str = DEFAULT_LANGUAGE
+    language_set: bool = False
     llm_model: str = ""
     llm_api_key_encrypted: str = ""
     llm_api_base: str = ""
@@ -139,6 +165,7 @@ def save_user_settings(settings: UserSettings) -> None:
 def set_user_language(user_id: int, language: str) -> UserSettings:
     settings = get_user_settings(user_id)
     settings.language = language
+    settings.language_set = True
     save_user_settings(settings)
     return settings
 

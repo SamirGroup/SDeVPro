@@ -1,6 +1,7 @@
-"""Turns a ScanResult into Telegram chat messages and a downloadable PDF.
+"""Turns a ScanResult into Telegram chat messages, a downloadable PDF, and a
+downloadable plain-text (.txt) report — in the user's chosen language.
 
-Telegram text is sent as plain text (no Markdown/HTML parse mode): scan
+Telegram chat text is sent as plain text (no Markdown/HTML parse mode): scan
 evidence can contain arbitrary characters (backticks, asterisks, angle
 brackets) pulled from the target, and letting any of that reach Telegram's
 Markdown/HTML parser risks a "can't parse entities" send failure. Visual
@@ -12,6 +13,7 @@ from __future__ import annotations
 import io
 from datetime import datetime
 
+from sdevpro.i18n import DEFAULT_LANGUAGE, severity_label, t
 from sdevpro.scanner.models import ScanResult
 
 _SEVERITY_EMOJI = {
@@ -20,14 +22,6 @@ _SEVERITY_EMOJI = {
     "medium": "🟨",
     "low": "🟦",
     "info": "⬜",
-}
-
-_SEVERITY_LABEL_UZ = {
-    "critical": "KRITIK",
-    "high": "YUQORI",
-    "medium": "O'RTA",
-    "low": "PAST",
-    "info": "MA'LUMOT",
 }
 
 TELEGRAM_MESSAGE_LIMIT = 3800  # headroom under Telegram's 4096 hard cap
@@ -51,66 +45,91 @@ def chunk_text(text: str, limit: int = TELEGRAM_MESSAGE_LIMIT) -> list[str]:
     return chunks
 
 
-def format_summary_message(result: ScanResult) -> str:
+def _kind_label(lang: str, result: ScanResult) -> str:
+    key = {
+        "github": "report_kind_github",
+        "whitebox": "report_kind_whitebox",
+    }.get(result.target_kind, "report_kind_blackbox")
+    return t(lang, key)
+
+
+def format_summary_message(result: ScanResult, lang: str | None = None) -> str:
+    lang = lang or result.language or DEFAULT_LANGUAGE
     counts = result.severity_counts()
     lines: list[str] = []
-    lines.append("SDeVPro — Xavfsizlik Skanerlash Hisoboti")
-    lines.append(f"Nishon: {result.target}")
-    lines.append(f"Rejim: {result.scan_mode} | {'Whitebox (kod)' if result.whitebox else 'Blackbox (tashqi)'}")
-    lines.append(f"Boshlandi: {_fmt_time(result.started_at)}")
+    lines.append(t(lang, "report_summary_title"))
+    lines.append(t(lang, "report_target", target=result.target))
+    lines.append(t(lang, "report_mode", mode=result.scan_mode, kind=_kind_label(lang, result)))
+    lines.append(t(lang, "report_started", time=_fmt_time(result.started_at)))
     if result.finished_at:
-        lines.append(f"Tugadi: {_fmt_time(result.finished_at)}")
+        lines.append(t(lang, "report_finished", time=_fmt_time(result.finished_at)))
     lines.append("")
-    lines.append("Topilmalar bo'yicha xulosa:")
+    lines.append(t(lang, "report_findings_summary"))
     for sev in ("critical", "high", "medium", "low", "info"):
         if counts.get(sev):
-            lines.append(f"  {_SEVERITY_EMOJI[sev]} {_SEVERITY_LABEL_UZ[sev]}: {counts[sev]}")
+            lines.append(f"  {_SEVERITY_EMOJI[sev]} {severity_label(lang, sev)}: {counts[sev]}")
     if not any(counts.values()):
-        lines.append("  Hech qanday topilma yo'q.")
+        lines.append(t(lang, "report_no_findings"))
     if result.error:
         lines.append("")
-        lines.append(f"[!] Skanerlash davomida xatolik: {result.error}")
+        lines.append(t(lang, "report_error", error=result.error))
     if result.summary:
         lines.append("")
-        lines.append("AI xulosasi:")
+        lines.append(t(lang, "report_ai_summary"))
         lines.append(result.summary)
     return "\n".join(lines)
 
 
-def format_findings_messages(result: ScanResult) -> list[str]:
+def _finding_block(finding, lang: str, index: int) -> str:  # noqa: ANN001
+    emoji = _SEVERITY_EMOJI.get(finding.severity, "⬜")
+    label = severity_label(lang, finding.severity)
+    block = [
+        f"{emoji} [{label}] #{index}: {finding.title}",
+        t(lang, "finding_category", value=finding.category),
+    ]
+    if finding.location:
+        block.append(t(lang, "finding_location", value=finding.location))
+    if finding.description:
+        block.append(t(lang, "finding_description", value=finding.description))
+    if finding.attack_vector:
+        block.append(t(lang, "finding_attack_vector", value=finding.attack_vector))
+    if finding.remediation:
+        block.append(t(lang, "finding_remediation", value=finding.remediation))
+    if finding.cwe:
+        block.append(f"CWE: {finding.cwe}")
+    if finding.cvss_score is not None:
+        block.append(f"CVSS: {finding.cvss_score}")
+    return "\n".join(block)
+
+
+def format_findings_messages(result: ScanResult, lang: str | None = None) -> list[str]:
+    lang = lang or result.language or DEFAULT_LANGUAGE
     findings = result.sorted_findings()
     if not findings:
         return []
-    blocks: list[str] = []
-    for i, finding in enumerate(findings, start=1):
-        emoji = _SEVERITY_EMOJI.get(finding.severity, "⬜")
-        label = _SEVERITY_LABEL_UZ.get(finding.severity, finding.severity.upper())
-        block = [
-            f"{emoji} [{label}] #{i}: {finding.title}",
-            f"Kategoriya: {finding.category}",
-        ]
-        if finding.location:
-            block.append(f"Joylashuv: {finding.location}")
-        if finding.description:
-            block.append(f"Tavsif: {finding.description}")
-        if finding.attack_vector:
-            block.append(f"Hujum vektori: {finding.attack_vector}")
-        if finding.remediation:
-            block.append(f"Tuzatish: {finding.remediation}")
-        if finding.cwe:
-            block.append(f"CWE: {finding.cwe}")
-        if finding.cvss_score is not None:
-            block.append(f"CVSS: {finding.cvss_score}")
-        blocks.append("\n".join(block))
-
+    blocks = [_finding_block(f, lang, i) for i, f in enumerate(findings, start=1)]
     full_text = "\n\n".join(blocks)
     return chunk_text(full_text)
 
 
-def format_defense_message(result: ScanResult) -> str | None:
+def format_defense_message(result: ScanResult, lang: str | None = None) -> str | None:
+    lang = lang or result.language or DEFAULT_LANGUAGE
     if not result.defense_recommendations:
         return None
-    return "SDeVPro — Umumiy Himoya Tavsiyalari\n\n" + result.defense_recommendations
+    return t(lang, "report_defense_title") + "\n\n" + result.defense_recommendations
+
+
+def format_full_text_report(result: ScanResult, lang: str | None = None) -> str:
+    """Single plain-text document combining summary + all findings + defense advice."""
+    lang = lang or result.language or DEFAULT_LANGUAGE
+    parts = [format_summary_message(result, lang)]
+    findings = result.sorted_findings()
+    if findings:
+        parts.append("\n\n".join(_finding_block(f, lang, i) for i, f in enumerate(findings, start=1)))
+    defense = format_defense_message(result, lang)
+    if defense:
+        parts.append(defense)
+    return "\n\n" + ("\n\n" + "-" * 40 + "\n\n").join(parts)
 
 
 def _fmt_time(iso_ts: str) -> str:
@@ -126,7 +145,8 @@ def _fmt_time(iso_ts: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-def build_pdf_report(result: ScanResult, logo_path: str | None = None) -> bytes:
+def build_pdf_report(result: ScanResult, logo_path: str | None = None, lang: str | None = None) -> bytes:
+    lang = lang or result.language or DEFAULT_LANGUAGE
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
@@ -148,7 +168,7 @@ def build_pdf_report(result: ScanResult, logo_path: str | None = None) -> bytes:
         rightMargin=2 * cm,
         topMargin=1.5 * cm,
         bottomMargin=1.5 * cm,
-        title=f"SDeVPro xavfsizlik hisoboti — {result.target}",
+        title=f"SDeVPro - {result.target}",
     )
     styles = getSampleStyleSheet()
     title_style = ParagraphStyle(
@@ -165,22 +185,28 @@ def build_pdf_report(result: ScanResult, logo_path: str | None = None) -> bytes:
         except Exception:  # noqa: BLE001
             pass
 
-    story.append(Paragraph("SDeVPro — Xavfsizlik Skanerlash Hisoboti", title_style))
+    story.append(Paragraph(_escape(t(lang, "report_summary_title")), title_style))
     story.append(Spacer(1, 0.4 * cm))
-    story.append(Paragraph(f"<b>Nishon:</b> {_escape(result.target)}", body))
-    story.append(Paragraph(f"<b>Rejim:</b> {_escape(result.scan_mode)}", body))
-    story.append(Paragraph(f"<b>Boshlandi:</b> {_fmt_time(result.started_at)}", body))
+    story.append(Paragraph(f"<b>{_escape(t(lang, 'report_target', target=result.target))}</b>", body))
+    story.append(
+        Paragraph(
+            _escape(t(lang, "report_mode", mode=result.scan_mode, kind=_kind_label(lang, result))), body
+        )
+    )
+    story.append(Paragraph(_escape(t(lang, "report_started", time=_fmt_time(result.started_at))), body))
     if result.finished_at:
-        story.append(Paragraph(f"<b>Tugadi:</b> {_fmt_time(result.finished_at)}", body))
+        story.append(
+            Paragraph(_escape(t(lang, "report_finished", time=_fmt_time(result.finished_at))), body)
+        )
 
     if result.summary:
-        story.append(Paragraph("Xulosa", h2))
+        story.append(Paragraph(_escape(t(lang, "report_ai_summary")), h2))
         story.append(Paragraph(_escape(result.summary), body))
 
     counts = result.severity_counts()
-    story.append(Paragraph("Xavflilik darajasi bo'yicha taqsimot", h2))
-    table_data = [["Daraja", "Soni"]] + [
-        [_SEVERITY_LABEL_UZ[sev], str(counts[sev])] for sev in ("critical", "high", "medium", "low", "info")
+    story.append(Paragraph(_escape(t(lang, "report_findings_summary")), h2))
+    table_data = [["", ""]] + [
+        [severity_label(lang, sev), str(counts[sev])] for sev in ("critical", "high", "medium", "low", "info")
     ]
     table = Table(table_data, colWidths=[6 * cm, 3 * cm])
     table.setStyle(
@@ -198,21 +224,32 @@ def build_pdf_report(result: ScanResult, logo_path: str | None = None) -> bytes:
 
     findings = result.sorted_findings()
     if findings:
-        story.append(Paragraph("Batafsil topilmalar", h2))
+        story.append(Spacer(1, 0.4 * cm))
         for i, finding in enumerate(findings, start=1):
-            label = _SEVERITY_LABEL_UZ.get(finding.severity, finding.severity.upper())
+            label = severity_label(lang, finding.severity)
+            story.append(Paragraph(f"<b>#{i} [{label}] {_escape(finding.title)}</b>", body))
             story.append(
-                Paragraph(f"<b>#{i} [{label}] {_escape(finding.title)}</b>", body)
+                Paragraph(f"<i>{_escape(t(lang, 'finding_category', value=finding.category))}</i>", body)
             )
-            story.append(Paragraph(f"<i>Kategoriya:</i> {_escape(finding.category)}", body))
             if finding.location:
-                story.append(Paragraph(f"<i>Joylashuv:</i> {_escape(finding.location)}", body))
+                story.append(Paragraph(_escape(t(lang, "finding_location", value=finding.location)), body))
             if finding.description:
-                story.append(Paragraph(_escape(finding.description), body))
+                story.append(
+                    Paragraph(_escape(t(lang, "finding_description", value=finding.description)), body)
+                )
             if finding.attack_vector:
-                story.append(Paragraph(f"<b>Hujum vektori:</b> {_escape(finding.attack_vector)}", body))
+                story.append(
+                    Paragraph(
+                        f"<b>{_escape(t(lang, 'finding_attack_vector', value=finding.attack_vector))}</b>",
+                        body,
+                    )
+                )
             if finding.remediation:
-                story.append(Paragraph(f"<b>Tuzatish:</b> {_escape(finding.remediation)}", body))
+                story.append(
+                    Paragraph(
+                        f"<b>{_escape(t(lang, 'finding_remediation', value=finding.remediation))}</b>", body
+                    )
+                )
             meta = []
             if finding.cwe:
                 meta.append(f"CWE: {finding.cwe}")
@@ -222,17 +259,16 @@ def build_pdf_report(result: ScanResult, logo_path: str | None = None) -> bytes:
                 story.append(Paragraph(" | ".join(meta), body))
             story.append(Spacer(1, 0.3 * cm))
     else:
-        story.append(Paragraph("Topilmalar aniqlanmadi.", body))
+        story.append(Paragraph(_escape(t(lang, "report_no_findings")), body))
 
     if result.defense_recommendations:
-        story.append(Paragraph("Umumiy himoya tavsiyalari", h2))
+        story.append(Paragraph(_escape(t(lang, "report_defense_title")), h2))
         story.append(Paragraph(_escape(result.defense_recommendations), body))
 
     story.append(Spacer(1, 0.6 * cm))
     story.append(
         Paragraph(
-            "<i>Ushbu hisobot faqat vakolat berilgan (authorized) xavfsizlik tekshiruvi doirasida "
-            "yaratilgan. SDeVPro / mijoz ruxsatisiz tizimlarni tekshirish uchun javobgar emas.</i>",
+            "<i>SDeVPro — authorized security assessment report.</i>",
             styles["Italic"],
         )
     )
