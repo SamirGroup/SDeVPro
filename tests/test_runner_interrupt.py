@@ -7,11 +7,11 @@ from typing import Any
 import pytest
 from agents import ModelSettings
 
-import strix.tools.notes.tools as notes_tools
-import strix.tools.todo.tools as todo_tools
-from strix.core import runner
-from strix.core.agents import AgentCoordinator
-from strix.runtime import session_manager
+import sdevpro.engine.tools.notes.tools as notes_tools
+import sdevpro.engine.tools.todo.tools as todo_tools
+from sdevpro.engine.core import runner
+from sdevpro.engine.core.agents import AgentCoordinator
+from sdevpro.engine.runtime import session_manager
 
 
 def _wire_runner(monkeypatch: pytest.MonkeyPatch, tmp_path: Any) -> None:

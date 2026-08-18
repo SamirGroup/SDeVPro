@@ -7,9 +7,9 @@ from pathlib import Path
 
 import pytest
 
-from strix.config import apply_config_override, loader
-from strix.config.settings import DEFAULT_MAX_TURNS
-from strix.interface.tui.backend.controller import TuiController
+from sdevpro.engine.config import apply_config_override, loader
+from sdevpro.engine.config.settings import DEFAULT_MAX_TURNS
+from sdevpro.engine.interface.tui.backend.controller import TuiController
 
 
 def args() -> argparse.Namespace:
@@ -438,7 +438,7 @@ async def test_existing_viewer_is_reopened_and_closed(
     controller.viewer_url = "http://127.0.0.1:1234/?token=test"
     server = ViewerServer()
     controller._viewer_httpd = server
-    monkeypatch.setattr("strix.interface.tui.backend.controller.webbrowser.open", opened.append)
+    monkeypatch.setattr("sdevpro.engine.interface.tui.backend.controller.webbrowser.open", opened.append)
 
     result = await controller.handle("viewer.open", {})
     controller.close_viewer()

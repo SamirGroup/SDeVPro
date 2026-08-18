@@ -15,10 +15,10 @@ from typing import Any, cast
 
 import pytest
 
-from strix.config.settings import DEFAULT_MAX_TURNS
-from strix.interface.tui import runtime as go_tui
-from strix.interface.tui import sidecar
-from strix.interface.tui.runtime import GoTuiRuntime
+from sdevpro.engine.config.settings import DEFAULT_MAX_TURNS
+from sdevpro.engine.interface.tui import runtime as go_tui
+from sdevpro.engine.interface.tui import sidecar
+from sdevpro.engine.interface.tui.runtime import GoTuiRuntime
 
 
 def args() -> argparse.Namespace:
@@ -42,7 +42,7 @@ def test_binary_command_prefers_packaged_sidecar(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Any,
 ) -> None:
-    sidecar = tmp_path / "strix-tui"
+    sidecar = tmp_path / "sdevpro-tui"
     sidecar.write_text("binary")
     monkeypatch.setattr(go_tui, "tui_source_dir", lambda: tmp_path / "tui-src")
     monkeypatch.setattr(go_tui, "get_strix_resource_path", lambda *_parts: sidecar)
@@ -62,13 +62,13 @@ def test_binary_command_prefers_current_source_over_packaged_sidecar(
     source = tmp_path / "tui-src"
     source.mkdir()
     (source / "go.mod").write_text("module test\n")
-    sidecar = tmp_path / "strix-tui"
+    sidecar = tmp_path / "sdevpro-tui"
     sidecar.write_text("stale")
     monkeypatch.setattr(go_tui, "tui_source_dir", lambda: tmp_path / "tui-src")
     monkeypatch.setattr(go_tui, "get_strix_resource_path", lambda *_parts: sidecar)
     monkeypatch.setattr(shutil, "which", lambda name: "/usr/bin/go" if name == "go" else None)
 
-    assert GoTuiRuntime.binary_command() == ["go", "run", "./cmd/strix-tui"]
+    assert GoTuiRuntime.binary_command() == ["go", "run", "./cmd/sdevpro-tui"]
 
 
 def test_binary_command_reports_missing_sidecar(
@@ -89,7 +89,7 @@ def test_binary_command_ignores_unconstrained_path_sidecar(
 ) -> None:
     monkeypatch.setattr(go_tui, "get_strix_resource_path", lambda *_parts: tmp_path / "missing")
     monkeypatch.setattr(go_tui, "tui_source_dir", lambda: tmp_path / "tui-src")
-    monkeypatch.setattr(shutil, "which", lambda _name: "/untrusted/path/strix-tui")
+    monkeypatch.setattr(shutil, "which", lambda _name: "/untrusted/path/sdevpro-tui")
 
     with pytest.raises(RuntimeError, match="Bubble Tea TUI binary not found"):
         GoTuiRuntime.binary_command()
@@ -818,13 +818,13 @@ async def test_setup_preflight_failure_does_not_start_scan(
 @pytest.mark.asyncio
 async def test_agent_state_sync_uses_latest_graph_snapshot_shape() -> None:
     runtime = GoTuiRuntime(args())
-    await runtime.coordinator.register("root", "Strix", parent_id=None)
+    await runtime.coordinator.register("root", "SDeVPro", parent_id=None)
     await runtime.coordinator.register("child", "Recon", parent_id="root")
     await runtime.coordinator.set_status("child", "failed", error="provider rejected request")
 
     await runtime._sync_agent_state()
 
-    assert runtime.live_view.agents["root"]["name"] == "Strix"
+    assert runtime.live_view.agents["root"]["name"] == "SDeVPro"
     child = runtime.live_view.agents["child"]
     assert child["name"] == "Recon"
     assert child["parent_id"] == "root"
@@ -836,7 +836,7 @@ async def test_agent_state_sync_uses_latest_graph_snapshot_shape() -> None:
 async def test_agent_state_sync_projects_completed_report() -> None:
     runtime = GoTuiRuntime(args())
     runtime.report_state = cast("Any", SimpleNamespace(run_record={"status": "completed"}))
-    await runtime.coordinator.register("root", "Strix", parent_id=None)
+    await runtime.coordinator.register("root", "SDeVPro", parent_id=None)
     await runtime.coordinator.set_status("root", "completed")
 
     await runtime._sync_agent_state()
@@ -848,7 +848,7 @@ async def test_agent_state_sync_projects_completed_report() -> None:
 async def test_agent_state_sync_does_not_mask_root_failure_with_completed_report() -> None:
     runtime = GoTuiRuntime(args())
     runtime.report_state = cast("Any", SimpleNamespace(run_record={"status": "completed"}))
-    await runtime.coordinator.register("root", "Strix", parent_id=None)
+    await runtime.coordinator.register("root", "SDeVPro", parent_id=None)
     await runtime.coordinator.set_status("root", "failed", error="finalization failed")
 
     await runtime._sync_agent_state()

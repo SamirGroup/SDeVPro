@@ -6,7 +6,7 @@ from typing import Any, cast
 
 import pytest
 
-from strix.core.sessions import open_agent_session
+from sdevpro.engine.core.sessions import open_agent_session
 
 
 def _count_open_fds() -> int | None:

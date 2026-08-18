@@ -9,8 +9,8 @@ import pytest
 from litellm.exceptions import BadRequestError, ContextWindowExceededError, RateLimitError
 from openai.types.responses import ResponseOutputMessage, ResponseOutputText
 
-from strix.config import ContextSettings
-from strix.llm import compaction
+from sdevpro.engine.config import ContextSettings
+from sdevpro.engine.llm import compaction
 
 
 if TYPE_CHECKING:

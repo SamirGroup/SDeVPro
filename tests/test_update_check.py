@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 from rich.console import Console
 
-from strix.interface import update_check
+from sdevpro.engine.interface import update_check
 
 
 @pytest.fixture(autouse=True)
@@ -133,10 +133,10 @@ def test_write_cache_preserves_existing_fields() -> None:
 
 
 def test_get_upgrade_command_all_methods() -> None:
-    assert update_check.get_upgrade_command("binary") == "strix --update"
-    assert update_check.get_upgrade_command("pipx") == "pipx upgrade strix-agent"
-    assert update_check.get_upgrade_command("uv") == "uv tool upgrade strix-agent"
-    assert update_check.get_upgrade_command("pip") == "pip install --upgrade strix-agent"
+    assert update_check.get_upgrade_command("binary") == "sdevpro.engine --update"
+    assert update_check.get_upgrade_command("pipx") == "pipx upgrade sdevpro-agent"
+    assert update_check.get_upgrade_command("uv") == "uv tool upgrade sdevpro-agent"
+    assert update_check.get_upgrade_command("pip") == "pip install --upgrade sdevpro-agent"
 
 
 def test_self_update_non_binary_prints_command(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -155,8 +155,8 @@ def test_self_update_already_latest(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_sha256_file(tmp_path: Path) -> None:
     path = tmp_path / "blob"
-    path.write_bytes(b"strix")
-    assert update_check._sha256_file(path) == hashlib.sha256(b"strix").hexdigest()
+    path.write_bytes(b"sdevpro.engine")
+    assert update_check._sha256_file(path) == hashlib.sha256(b"sdevpro.engine").hexdigest()
 
 
 @pytest.mark.parametrize(

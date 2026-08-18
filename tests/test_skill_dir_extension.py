@@ -3,9 +3,9 @@ from pathlib import Path
 
 import pytest
 
-import strix.skills as skills_mod
-from strix.agents.prompt import render_system_prompt
-from strix.skills import (
+import sdevpro.engine.skills as skills_mod
+from sdevpro.engine.agents.prompt import render_system_prompt
+from sdevpro.engine.skills import (
     get_all_skill_names,
     get_available_skills,
     load_skills,
@@ -14,7 +14,7 @@ from strix.skills import (
     skill_search_dirs,
     validate_requested_skills,
 )
-from strix.utils.resource_paths import get_strix_resource_path
+from sdevpro.engine.utils.resource_paths import get_strix_resource_path
 
 
 @pytest.fixture(autouse=True)

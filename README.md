@@ -48,11 +48,11 @@ xususiyatlari:
   klonlab, kod ichidagi maxfiy kalitlar va xavfli naqshlarni tekshiradi.
 
 Kod bazasi ichki texnik sabablarga ko'ra ikkita Python paketidan iborat:
-`sdevpro/` (asosiy, Docker'siz, yangi dvigatel) va `strix/` (ichki modul
+`sdevpro/` (asosiy, Docker'siz, yangi dvigatel) va `sdevpro/` (ichki modul
 nomi — asl ko'p-agentli, Docker-sandbox asosidagi chuqur tekshiruv mexanizmi;
 foydalanuvchiga ko'rinmaydi, hech qanday tashqi xizmatga ulanmaydi va
 standart ishga tushirishda ishlatilmaydi). Ikkalasi ham to'liq mustaqil —
-`sdevpro/` paketi `strix/` papkasini import qilmaydi.
+`sdevpro/`.
 
 > [!WARNING]
 > **Faqat vakolat berilgan tekshiruvlar uchun.** SDeVPro sizga ko'rsatgan
@@ -296,7 +296,7 @@ SDeVPro/
 ├── api/index.py          # Vercel kirish nuqtasi
 ├── vercel.json            # Vercel marshrutlash + cron sozlamalari
 ├── requirements.txt        # Vercel uchun minimal bog'liqliklar
-├── strix/                 # Ichki modul nomi — asl ko'p-agentli dvigatel
+├── sdevpro/                 # Ichki modul nomi — asl ko'p-agentli dvigatel
 │                          # (Docker-asoslangan, standart oqimda ishlatilmaydi)
 ├── .env.example
 └── NOTICE                 # Apache-2.0 talabiga ko'ra o'zgarishlar ro'yxati

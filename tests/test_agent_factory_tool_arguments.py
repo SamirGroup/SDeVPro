@@ -8,7 +8,7 @@ from typing import Any, cast
 import pytest
 from agents.tool import FunctionTool
 
-from strix.agents import factory
+from sdevpro.engine.agents import factory
 
 
 def _capturing_tool(captured: dict[str, str], schema: dict[str, Any]) -> FunctionTool:

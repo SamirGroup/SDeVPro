@@ -20,9 +20,9 @@ from agents.models.openai_chatcompletions import OpenAIChatCompletionsModel
 from agents.run import RunConfig
 from openai import AsyncOpenAI
 
-from strix.config import loader
-from strix.config.loader import load_settings
-from strix.config.models import StrixProvider, _NonStreamingModel, _TurnGuardModel
+from sdevpro.engine.config import loader
+from sdevpro.engine.config.loader import load_settings
+from sdevpro.engine.config.models import StrixProvider, _NonStreamingModel, _TurnGuardModel
 
 
 if TYPE_CHECKING:
@@ -180,7 +180,7 @@ class _DummyModel(Model):
 
 
 def test_cap_is_configurable(monkeypatch: pytest.MonkeyPatch, _reset_settings: None) -> None:
-    monkeypatch.setattr("strix.config.models.MultiProvider.get_model", lambda *_: _DummyModel())
+    monkeypatch.setattr("sdevpro.engine.config.models.MultiProvider.get_model", lambda *_: _DummyModel())
     monkeypatch.setenv("LLM_MAX_TOOL_CALLS_PER_TURN", "7")
     load_settings()
 

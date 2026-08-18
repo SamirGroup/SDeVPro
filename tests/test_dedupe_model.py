@@ -5,9 +5,9 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING
 
-from strix.config import loader
-from strix.config.settings import DedupeSettings
-from strix.report.dedupe import _dedupe_model_settings
+from sdevpro.engine.config import loader
+from sdevpro.engine.config.settings import DedupeSettings
+from sdevpro.engine.report.dedupe import _dedupe_model_settings
 
 
 if TYPE_CHECKING:

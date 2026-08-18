@@ -1,4 +1,4 @@
-"""Tests for pure input builders in strix.core.inputs."""
+"""Tests for pure input builders in sdevpro.engine.core.inputs."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from typing import Any
 import litellm
 import pytest
 
-from strix.core.inputs import (
+from sdevpro.engine.core.inputs import (
     build_root_task,
     build_scope_context,
     child_initial_input,
@@ -370,8 +370,8 @@ def test_openrouter_attribution_rides_on_the_request_headers() -> None:
         None, model_name="openrouter/anthropic/claude-sonnet-4-5"
     ).extra_headers
     assert headers == {
-        "HTTP-Referer": "https://strix.ai",
-        "X-Title": "Strix",
+        "HTTP-Referer": "https://sdevpro.engine.ai",
+        "X-Title": "SDeVPro",
         "X-OpenRouter-Categories": "cli-agent",
     }
 
@@ -389,4 +389,4 @@ def test_user_headers_override_openrouter_attribution() -> None:
     assert headers is not None
     assert headers["X-Title"] == "Custom"
     assert headers["X-Tenant"] == "acme"
-    assert headers["HTTP-Referer"] == "https://strix.ai"
+    assert headers["HTTP-Referer"] == "https://sdevpro.engine.ai"

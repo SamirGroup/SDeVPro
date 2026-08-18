@@ -3,8 +3,8 @@ import sys
 import pytest
 import urllib3.response
 
-from strix.telemetry import logging as tlog
-from strix.telemetry.logging import _is_urllib3_closed_file_noise
+from sdevpro.engine.telemetry import logging as tlog
+from sdevpro.engine.telemetry.logging import _is_urllib3_closed_file_noise
 
 
 class _Args:

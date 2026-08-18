@@ -8,8 +8,8 @@ from typing import Any
 import pytest
 from agents.usage import Usage
 
-from strix.report.state import ReportState
-from strix.telemetry import posthog, scarf
+from sdevpro.engine.report.state import ReportState
+from sdevpro.engine.telemetry import posthog, scarf
 
 
 def _usage(requests: int, input_tokens: int, output_tokens: int, total_tokens: int) -> Usage:

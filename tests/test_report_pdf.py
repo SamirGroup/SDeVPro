@@ -10,7 +10,7 @@ import pytest
 from pypdf import PdfReader
 from pypdf.errors import WrongPasswordError
 
-from strix.interface.viewer.report_pdf import (
+from sdevpro.engine.interface.viewer.report_pdf import (
     build_encrypted_report,
     encrypt_pdf,
     generate_password,
@@ -98,7 +98,7 @@ def test_build_encrypted_report(tmp_path: Path) -> None:
     run_dir = _make_run(tmp_path, name="run-42")
     pdf_bytes, password, filename = build_encrypted_report(run_dir)
 
-    assert filename == "strix-report-run-42.pdf"
+    assert filename == "sdevpro-report-run-42.pdf"
     assert len(password) >= 20
     reader = PdfReader(BytesIO(pdf_bytes))
     assert reader.is_encrypted

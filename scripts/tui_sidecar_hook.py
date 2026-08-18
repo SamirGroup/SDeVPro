@@ -26,7 +26,7 @@ class CustomBuildHook(BuildHookInterface[Any]):
             return
 
         root = Path(self.root)
-        executable = "strix-tui.exe" if os.name == "nt" else "strix-tui"
+        executable = "sdevpro-tui.exe" if os.name == "nt" else "sdevpro-tui"
         output = root / "build" / "sidecar" / executable
         output.parent.mkdir(parents=True, exist_ok=True)
 
@@ -43,14 +43,14 @@ class CustomBuildHook(BuildHookInterface[Any]):
                 "-ldflags=-s -w",
                 "-o",
                 str(output),
-                "./cmd/strix-tui",
+                "./cmd/sdevpro-tui",
             ],
-            cwd=root / "strix" / "interface" / "tui",
+            cwd=root / "sdevpro" / "interface" / "tui",
             env=env,
             check=True,
         )
 
-        build_data["force_include"][str(output)] = f"strix/bin/{executable}"
+        build_data["force_include"][str(output)] = f"sdevpro/engine/bin/{executable}"
         build_data["pure_python"] = False
         platform_tag = os.environ.get("STRIX_WHEEL_PLATFORM_TAG")
         if not platform_tag:

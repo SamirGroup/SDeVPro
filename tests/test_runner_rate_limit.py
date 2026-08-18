@@ -11,11 +11,11 @@ import pytest
 from agents import ModelSettings
 from openai import RateLimitError
 
-import strix.tools.notes.tools as notes_tools
-import strix.tools.todo.tools as todo_tools
-from strix.core import runner
-from strix.core.agents import AgentCoordinator
-from strix.runtime import session_manager
+import sdevpro.engine.tools.notes.tools as notes_tools
+import sdevpro.engine.tools.todo.tools as todo_tools
+from sdevpro.engine.core import runner
+from sdevpro.engine.core.agents import AgentCoordinator
+from sdevpro.engine.runtime import session_manager
 
 
 def _make_rate_limit_error() -> RateLimitError:
@@ -90,5 +90,5 @@ async def test_persistent_rate_limit_stops_gracefully(
     assert len(root_ids) == 1
     assert coordinator.statuses[root_ids[0]] == "stopped"
     # the resume hint must carry the real scan id, not a literal placeholder
-    assert "strix --resume scan-test" in caplog.text
+    assert "sdevpro.engine --resume scan-test" in caplog.text
     assert "<run_name>" not in caplog.text

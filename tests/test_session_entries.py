@@ -7,13 +7,13 @@ from typing import Any
 
 from agents.sandbox.entries import File, LocalDir
 
-from strix.runtime.backends import (
+from sdevpro.engine.runtime.backends import (
     _BACKENDS,
     _BIND_MOUNT_BACKENDS,
     backend_supports_bind_mounts,
     register_backend,
 )
-from strix.runtime.session_manager import (
+from sdevpro.engine.runtime.session_manager import (
     build_bind_mounts,
     build_extra_file_bind_mounts,
     build_extra_file_entries,
@@ -167,21 +167,21 @@ def test_manifest_entries_skip_incomplete_sources() -> None:
 
 def test_extra_file_becomes_in_memory_manifest_entry() -> None:
     entries = build_extra_file_entries(
-        [{"workspace_path": "/workspace/.strix/dependency-issues.jsonl", "content": b"{}\n"}]
+        [{"workspace_path": "/workspace/.sdevpro/engine/dependency-issues.jsonl", "content": b"{}\n"}]
     )
 
-    assert set(entries) == {".strix/dependency-issues.jsonl"}
-    entry = entries[".strix/dependency-issues.jsonl"]
+    assert set(entries) == {".sdevpro/engine/dependency-issues.jsonl"}
+    entry = entries[".sdevpro/engine/dependency-issues.jsonl"]
     assert isinstance(entry, File)
     assert entry.content == b"{}\n"
 
 
 def test_extra_file_str_content_is_encoded_utf8() -> None:
     entries = build_extra_file_entries(
-        [{"workspace_path": "/workspace/.strix/note.txt", "content": "héllo"}]
+        [{"workspace_path": "/workspace/.sdevpro/engine/note.txt", "content": "héllo"}]
     )
 
-    entry = entries[".strix/note.txt"]
+    entry = entries[".sdevpro/engine/note.txt"]
     assert isinstance(entry, File)
     assert entry.content == "héllo".encode()
 
@@ -226,16 +226,16 @@ def test_extra_file_shadowing_a_nested_source_root_is_skipped(tmp_path: Path) ->
 def test_extra_file_beside_a_source_tree_is_kept(tmp_path: Path) -> None:
     sources = [_source("repo", str(tmp_path))]
     beside = [
-        {"workspace_path": "/workspace/.strix/dependency-issues.jsonl", "content": b"{}\n"},
+        {"workspace_path": "/workspace/.sdevpro/engine/dependency-issues.jsonl", "content": b"{}\n"},
         {"workspace_path": "/workspace/repo-notes.txt", "content": b"x"},  # sibling, no prefix
     ]
 
     entries = build_extra_file_entries(beside, sources)
     mounts = build_extra_file_bind_mounts(beside, tmp_path / "staging", sources)
 
-    assert set(entries) == {".strix/dependency-issues.jsonl", "repo-notes.txt"}
+    assert set(entries) == {".sdevpro/engine/dependency-issues.jsonl", "repo-notes.txt"}
     assert [m["target"] for m in mounts] == [
-        "/workspace/.strix/dependency-issues.jsonl",
+        "/workspace/.sdevpro/engine/dependency-issues.jsonl",
         "/workspace/repo-notes.txt",
     ]
 
@@ -275,13 +275,13 @@ def test_extra_file_becomes_read_only_bind_mount_of_staged_copy(tmp_path: Path) 
     staging = tmp_path / "staging"
 
     mounts = build_extra_file_bind_mounts(
-        [{"workspace_path": "/workspace/.strix/dependency-issues.jsonl", "content": b"{}\n"}],
+        [{"workspace_path": "/workspace/.sdevpro/engine/dependency-issues.jsonl", "content": b"{}\n"}],
         staging,
     )
 
     assert len(mounts) == 1
     mount = mounts[0]
-    assert mount["target"] == "/workspace/.strix/dependency-issues.jsonl"
+    assert mount["target"] == "/workspace/.sdevpro/engine/dependency-issues.jsonl"
     assert mount["read_only"] is True
     staged = Path(mount["source"])
     assert staged.read_bytes() == b"{}\n"
@@ -289,7 +289,7 @@ def test_extra_file_becomes_read_only_bind_mount_of_staged_copy(tmp_path: Path) 
 
 
 def test_extra_file_bind_mounts_and_entries_agree_on_the_sandbox_path(tmp_path: Path) -> None:
-    extra = [{"workspace_path": "/workspace/.strix/dependency-issues.jsonl", "content": b"{}\n"}]
+    extra = [{"workspace_path": "/workspace/.sdevpro/engine/dependency-issues.jsonl", "content": b"{}\n"}]
 
     entries = build_extra_file_entries(extra)
     mounts = build_extra_file_bind_mounts(extra, tmp_path)
