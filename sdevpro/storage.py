@@ -27,15 +27,33 @@ class ScheduleEntry:
     created_by: int | None = None
     scan_mode: str = "quick"
     last_run_at: str | None = None  # ISO timestamp; used by the cron-driven (serverless) runner
+    mode: str = "interval"  # "interval" (every N minutes) | "daily" (fixed clock time)
+    daily_time: str | None = None  # "HH:MM" (24h, UTC), used when mode == "daily"
 
     def key(self) -> str:
         return f"{self.chat_id}::{self.target}"
 
     def is_due(self, now) -> bool:  # noqa: ANN001
-        if self.last_run_at is None:
-            return True
+        """Used only by the cron-driven (serverless) runner — the polling bot's
+        JobQueue fires on its own timer and does not consult this."""
         from datetime import datetime, timedelta
 
+        if self.mode == "daily" and self.daily_time:
+            try:
+                hour, minute = (int(p) for p in self.daily_time.split(":", 1))
+            except ValueError:
+                return False
+            target_today = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+            if self.last_run_at is None:
+                return now >= target_today
+            try:
+                last = datetime.fromisoformat(self.last_run_at)
+            except ValueError:
+                return now >= target_today
+            return now >= target_today and last < target_today
+
+        if self.last_run_at is None:
+            return True
         try:
             last = datetime.fromisoformat(self.last_run_at)
         except ValueError:

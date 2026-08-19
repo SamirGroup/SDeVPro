@@ -333,6 +333,50 @@ def parse_interval_minutes(raw: str) -> int | None:
     return total or None
 
 
+_DAILY_KEYWORD = "daily"
+_HHMM_RE = re.compile(r"^([01]?\d|2[0-3]):([0-5]\d)$")
+
+_INTERVAL_PRESETS: tuple[tuple[str, int], ...] = (
+    ("schedule_btn_30m", 30),
+    ("schedule_btn_1h", 60),
+    ("schedule_btn_3h", 180),
+    ("schedule_btn_6h", 360),
+    ("schedule_btn_12h", 720),
+)
+_DAILY_TIME_PRESETS: tuple[str, ...] = ("06:00", "09:00", "12:00", "18:00", "21:00")
+
+_pending_schedule_target: dict[int, str] = {}
+
+
+def _normalize_hhmm(raw: str) -> str | None:
+    match = _HHMM_RE.match(raw.strip())
+    if not match:
+        return None
+    return f"{int(match.group(1)):02d}:{match.group(2)}"
+
+
+def _interval_choice_keyboard(lang: str) -> InlineKeyboardMarkup:
+    rows = [[InlineKeyboardButton(t(lang, key), callback_data=f"sched_iv_{minutes}")] for key, minutes in _INTERVAL_PRESETS]
+    rows.append([InlineKeyboardButton(t(lang, "schedule_btn_daily"), callback_data="sched_daily_menu")])
+    return InlineKeyboardMarkup(rows)
+
+
+def _daily_time_keyboard() -> InlineKeyboardMarkup:
+    row = [InlineKeyboardButton(hhmm, callback_data=f"sched_dt_{hhmm}") for hhmm in _DAILY_TIME_PRESETS]
+    return InlineKeyboardMarkup([row])
+
+
+async def _prechecks_ok(update: Update, settings: Settings, user_id: int, chat_id: int, lang: str) -> bool:
+    us = storage.get_user_settings(user_id)
+    if not us.has_llm_key():
+        await update.effective_message.reply_text(t(lang, "no_api_key"))
+        return False
+    if settings.require_consent and not storage.has_consented(chat_id):
+        await update.effective_message.reply_text(t(lang, "schedule_needs_consent"))
+        return False
+    return True
+
+
 async def cmd_schedule(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     settings = get_settings()
     if not _is_allowed(settings, update):
@@ -341,37 +385,125 @@ async def cmd_schedule(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     user = update.effective_user
     lang = _lang(user.id)
+    chat_id = update.effective_chat.id
     args = context.args or []
-    if len(args) < 2:  # noqa: PLR2004
+    if not args:
         await update.effective_message.reply_text(t(lang, "schedule_usage"))
         return
 
-    *target_parts, interval_raw = args
-    target = " ".join(target_parts)
-    minutes = parse_interval_minutes(interval_raw)
-    if not minutes or minutes < 5:  # noqa: PLR2004
-        await update.effective_message.reply_text(t(lang, "schedule_bad_interval"))
+    if not await _prechecks_ok(update, settings, user.id, chat_id, lang):
         return
 
-    us = storage.get_user_settings(user.id)
-    if not us.has_llm_key():
-        await update.effective_message.reply_text(t(lang, "no_api_key"))
+    # /schedule <target> daily <HH:MM>
+    if len(args) >= 3 and args[-2].lower() == _DAILY_KEYWORD:  # noqa: PLR2004
+        hhmm = _normalize_hhmm(args[-1])
+        target = " ".join(args[:-2])
+        if hhmm and target:
+            await _save_daily_schedule(update, context, chat_id, user.id, target, hhmm, lang)
+            return
+        await update.effective_message.reply_text(t(lang, "schedule_usage"))
         return
 
-    chat_id = update.effective_chat.id
-    if settings.require_consent and not storage.has_consented(chat_id):
-        await update.effective_message.reply_text(t(lang, "schedule_needs_consent"))
-        return
+    # /schedule <target> <interval>  (explicit interval string, backward compatible)
+    if len(args) >= 2:  # noqa: PLR2004
+        *target_parts, interval_raw = args
+        minutes = parse_interval_minutes(interval_raw)
+        if minutes and minutes >= 5:  # noqa: PLR2004
+            target = " ".join(target_parts)
+            await _save_interval_schedule(update, context, chat_id, user.id, target, minutes, lang)
+            return
 
+    # /schedule <target>  (no interval given) -> interactive time picker
+    target = " ".join(args)
+    _pending_schedule_target[chat_id] = target
+    await update.effective_message.reply_text(
+        t(lang, "schedule_choose_prompt", target=target) + "\n\n" + t(lang, "schedule_custom_hint", target=target),
+        reply_markup=_interval_choice_keyboard(lang),
+    )
+
+
+async def _save_interval_schedule(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+    chat_id: int,
+    user_id: int,
+    target: str,
+    minutes: int,
+    lang: str,
+) -> None:
     entry = storage.ScheduleEntry(
-        chat_id=chat_id,
-        target=target,
-        interval_minutes=minutes,
-        created_by=user.id,
+        chat_id=chat_id, target=target, interval_minutes=minutes, created_by=user_id, mode="interval"
     )
     storage.save_schedule(entry)
     _register_job(context.application, entry)
     await update.effective_message.reply_text(t(lang, "schedule_set", target=target, minutes=minutes))
+
+
+async def _save_daily_schedule(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+    chat_id: int,
+    user_id: int,
+    target: str,
+    hhmm: str,
+    lang: str,
+) -> None:
+    entry = storage.ScheduleEntry(
+        chat_id=chat_id,
+        target=target,
+        interval_minutes=24 * 60,
+        created_by=user_id,
+        mode="daily",
+        daily_time=hhmm,
+    )
+    storage.save_schedule(entry)
+    _register_job(context.application, entry)
+    await update.effective_message.reply_text(t(lang, "schedule_daily_set", target=target, time=hhmm))
+
+
+async def on_schedule_interval_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    await query.answer()
+    chat_id = update.effective_chat.id
+    user = update.effective_user
+    lang = _lang(user.id if user else None)
+    target = _pending_schedule_target.pop(chat_id, None)
+    if not target or user is None:
+        return
+    minutes = int((query.data or "sched_iv_60").removeprefix("sched_iv_"))
+    await _save_interval_schedule(update, context, chat_id, user.id, target, minutes, lang)
+    with contextlib.suppress(Exception):
+        await query.delete_message()
+
+
+async def on_schedule_daily_menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    await query.answer()
+    chat_id = update.effective_chat.id
+    user = update.effective_user
+    lang = _lang(user.id if user else None)
+    target = _pending_schedule_target.get(chat_id)
+    if not target:
+        return
+    await query.edit_message_text(
+        t(lang, "schedule_choose_daily_time", target=target),
+        reply_markup=_daily_time_keyboard(),
+    )
+
+
+async def on_schedule_daily_time_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    await query.answer()
+    chat_id = update.effective_chat.id
+    user = update.effective_user
+    lang = _lang(user.id if user else None)
+    target = _pending_schedule_target.pop(chat_id, None)
+    if not target or user is None:
+        return
+    hhmm = (query.data or "sched_dt_09:00").removeprefix("sched_dt_")
+    await _save_daily_schedule(update, context, chat_id, user.id, target, hhmm, lang)
+    with contextlib.suppress(Exception):
+        await query.delete_message()
 
 
 async def cmd_unschedule(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -404,7 +536,11 @@ async def cmd_myschedules(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         await update.effective_message.reply_text(t(lang, "myschedules_none"))
         return
     lines = [t(lang, "myschedules_header")]
-    lines.extend(t(lang, "myschedules_item", target=s.target, minutes=s.interval_minutes) for s in schedules)
+    for s in schedules:
+        if s.mode == "daily" and s.daily_time:
+            lines.append(f"- {s.target} ({t(lang, 'schedule_btn_daily').lower()}, {s.daily_time} UTC)")
+        else:
+            lines.append(t(lang, "myschedules_item", target=s.target, minutes=s.interval_minutes))
     await update.effective_message.reply_text("\n".join(lines))
 
 
@@ -509,13 +645,28 @@ def _register_job(application: Application, entry: storage.ScheduleEntry) -> Non
     name = _job_name(entry.chat_id, entry.target)
     for existing in application.job_queue.get_jobs_by_name(name):
         existing.schedule_removal()
+    data = {"target": entry.target, "created_by": entry.created_by}
+
+    if entry.mode == "daily" and entry.daily_time:
+        from datetime import UTC, time as dt_time
+
+        hour, minute = (int(p) for p in entry.daily_time.split(":", 1))
+        application.job_queue.run_daily(
+            _scheduled_scan_job,
+            time=dt_time(hour=hour, minute=minute, tzinfo=UTC),
+            chat_id=entry.chat_id,
+            name=name,
+            data=data,
+        )
+        return
+
     application.job_queue.run_repeating(
         _scheduled_scan_job,
         interval=entry.interval_minutes * 60,
         first=entry.interval_minutes * 60,
         chat_id=entry.chat_id,
         name=name,
-        data={"target": entry.target, "created_by": entry.created_by},
+        data=data,
     )
 
 
@@ -564,6 +715,9 @@ def build_application(settings: Settings | None = None) -> Application:
     application.add_handler(CommandHandler("report", cmd_report))
     application.add_handler(CallbackQueryHandler(on_language_callback, pattern="^lang_"))
     application.add_handler(CallbackQueryHandler(on_consent_callback, pattern="^consent_ok$"))
+    application.add_handler(CallbackQueryHandler(on_schedule_interval_callback, pattern=r"^sched_iv_\d+$"))
+    application.add_handler(CallbackQueryHandler(on_schedule_daily_menu_callback, pattern="^sched_daily_menu$"))
+    application.add_handler(CallbackQueryHandler(on_schedule_daily_time_callback, pattern=r"^sched_dt_"))
     application.add_handler(MessageHandler(filters.Document.ALL, on_document))
     application.add_error_handler(on_error)
 
